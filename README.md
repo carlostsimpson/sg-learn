@@ -3,7 +3,7 @@ deep learning about semigroups
 
 This is going to contain a jupyter notebook (sg-learn-nil4.ipynb) for classification proofs of 4-nilpotent 
 semigroups with a pair of neural networks learning to do the classification proofs minimizing the number of nodes. 
-A preliminary version of the associated preprint will also be included in the repository. 
+A preliminary version of the associated preprint (sgln4.pdf) will also be included in the repository. 
 
 The first part of the notebook should now run with user input to choose the parameters, mainly these
 are alpha,beta which are the number of elements of the ``associated-grade'' pieces of the nilpotent
