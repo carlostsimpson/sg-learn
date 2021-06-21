@@ -1,10 +1,11 @@
 import torch
 
-from utils import CoherenceError, itp, itt, numpr
+from historical import Historical
+from utils import CoherenceError, itt, numpr
 
 
 class Parameters:  # records various parameters
-    def __init__(self):
+    def __init__(self, HST: Historical):
         #
         print("please enter alpha, beta and model_n")
         print(

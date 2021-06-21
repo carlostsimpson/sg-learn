@@ -15,12 +15,12 @@ HST.proof_nodes_max = (
     100000  #  can be used to set the upper limit for proof lengths
 )
 #
-Pp = Parameters()  # this will ask for alpha, beta and model_n
+Pp = Parameters(HST)  # this will ask for alpha, beta and model_n
 #
 Pp.basicloop_iterations = 3  # default is 3
 Pp.basicloop_training_iterations = 3  # default is 3
 #
-Dd = Driver(Pp)
+Dd = Driver(Pp, HST)
 #
 # the following could be set to False to turn off those additional filters
 Pp.profile_filter_on = True  # the default is True

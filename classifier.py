@@ -1,17 +1,18 @@
 import torch
 
 from constants import Dvc
+from historical import Historical
 from relations_4 import Relations4
 from symmetric_group import SymmetricGroup
 from utils import arangeic, itf, itp, numpr
 
 
 class Classifier:  # this is a very first part of classification up to isomorphism
-    def __init__(self, P):
+    def __init__(self, P, HST: Historical):
         #
         #
         self.Pp = P
-        self.rr4 = Relations4(self.Pp)
+        self.rr4 = Relations4(self.Pp, HST)
         self.rr3 = self.rr4.rr2
         self.rr2 = self.rr4.rr2
         self.rr1 = self.rr4.rr1

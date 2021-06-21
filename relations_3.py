@@ -1,12 +1,13 @@
 import torch
 
 from constants import Dvc
+from historical import Historical
 from relations_2 import Relations2
 from utils import arangeic, itp, nump
 
 
 class Relations3:
-    def __init__(self, pp):
+    def __init__(self, pp, HST: Historical):
         #
         self.pp = pp
         #
@@ -20,6 +21,7 @@ class Relations3:
         self.alpha3z = self.alpha3 + 1
         self.beta = self.pp.beta
         self.betaz = self.beta + 1
+        self.HST = HST
         #
 
     def printmultiplicities(self, Data):
@@ -151,14 +153,14 @@ class Relations3:
         bz = self.betaz
         #
         length = len(xyvector)
-        HST.current_proof_passive_count += length
+        self.HST.current_proof_passive_count += length
         #
         availablexypv = availablexyp.view(length, a2, bz)
         lrange = arangeic(length)
         available_cuts = availablexypv[lrange, xyvector]
         valency = available_cuts.to(torch.int64).sum(1)
         for v in range(bz + 1):
-            HST.current_proof_valency_frequency[v] += (
+            self.HST.current_proof_valency_frequency[v] += (
                 (valency == v).to(torch.int64).sum(0)
             )
         return
@@ -257,10 +259,10 @@ class Relations3:
             newphase[phasechange] = 1
             NewActiveData["info"][:, self.pp.phase] = newphase
         #
-        HST.current_proof_impossible_count += newimpossible.to(
+        self.HST.current_proof_impossible_count += newimpossible.to(
             torch.int64
         ).sum(0)
-        HST.current_proof_done_count += newdone.to(torch.int64).sum(0)
+        self.HST.current_proof_done_count += newdone.to(torch.int64).sum(0)
         #
         if self.pp.verbose:
             print(" >>>")

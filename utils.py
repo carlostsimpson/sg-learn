@@ -3,7 +3,7 @@ import gc
 import numpy as np
 import torch
 
-from constants import Dvc
+from constants import CpuDvc, Dvc
 
 
 class CoherenceError(Exception):

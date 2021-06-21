@@ -3,16 +3,18 @@ import gc
 import torch
 
 from constants import Dvc
+from historical import Historical
 from relations_3 import Relations3
 from utils import arangeic, itf, itp, itt, memReport, nump, numpr
 
 
 class Relations4:
-    def __init__(self, pp):
+    def __init__(self, pp, HST: Historical):
         #
         self.pp = pp
         #
-        self.rr3 = Relations3(pp)
+        self.HST = HST
+        self.rr3 = Relations3(pp, self.HST)
         self.rr2 = self.rr3.rr2
         self.rr1 = self.rr3.rr1
         #
@@ -253,7 +255,7 @@ class Relations4:
                     self.ECN += (
                         itt(CurrentData["length"]).clone().to(torch.float)
                     )
-                    if self.ECN > HST.proof_nodes_max:
+                    if self.ECN > self.HST.proof_nodes_max:
                         print("break after maximum proof nodes")
                         break
                 #
@@ -365,11 +367,11 @@ class Relations4:
         #
         if dropoutlimit == 0:
             cumulative_nodes = torch.round(self.ECN).to(torch.int64)
-            HST.record_full_proof(
+            self.HST.record_full_proof(
                 Mstrat, stepcount, cumulative_nodes, self.donecount
             )
         else:
-            HST.record_dropout_proof(
+            self.HST.record_dropout_proof(
                 self.pp.dropout_style, dropoutlimit, stepcount, self.ECN
             )
         #

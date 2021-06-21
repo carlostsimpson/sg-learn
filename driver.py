@@ -1,19 +1,31 @@
+import gc
+
 import torch
 
 from classifier import Classifier
 from constants import Dvc
+from historical import Historical
 from learner import Learner
 from relations_4 import Relations4
 from symmetric_group import SymmetricGroup
-from utils import CoherenceError, arangeic, itp, nump, numpi, numpr, zbinary
+from utils import (
+    CoherenceError,
+    arangeic,
+    itp,
+    memReport,
+    nump,
+    numpi,
+    numpr,
+    zbinary,
+)
 
 
 class Driver:  # to run everything, it includes the sieve for instances sigma
-    def __init__(self, P):
+    def __init__(self, P, HST: Historical):
         #
         #
         self.Pp = P
-        self.rr4 = Relations4(self.Pp)
+        self.rr4 = Relations4(self.Pp, HST)
         self.rr3 = self.rr4.rr2
         self.rr2 = self.rr4.rr2
         self.rr1 = self.rr4.rr1
@@ -34,11 +46,12 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         self.ECN_collection = 0.0
         self.ECN_average = 0.0
         #
-        self.Cc = Classifier(self.Pp)
+        self.Cc = Classifier(self.Pp, HST)
         #
         self.Ll = Learner(self.rr4)
         #
-        HST.record_driver(self.alpha, self.beta)
+        self.HST = HST
+        self.HST.record_driver(self.alpha, self.beta)
 
     def printprod(self, prod, loc):
         #
@@ -560,14 +573,14 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         print("                classification proof")
         print("---   ---   ---   ---   ---   ---   ---   ---   ---")
         #
-        HST.title_text_sigma_proof = title_text
+        self.HST.title_text_sigma_proof = title_text
         #
         self.rr4.proofnumber = 0
         self.rr4.proofinstance = 0
         self.rr4.allnumbers = 1
         #
         if dropoutlimit == 0:
-            HST.reset_current_proof()
+            self.HST.reset_current_proof()
         #
         self.Cc.initialize()
         #
@@ -612,9 +625,9 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         #
         if dropoutlimit == 0:
             if Mstrat.benchmark:
-                HST.record_current_proof(benchmark=True)
+                self.HST.record_current_proof(self.Pp, benchmark=True)
             else:
-                HST.record_current_proof()
+                self.HST.record_current_proof(self.Pp)
         #
         print("---   ---   ---   ---   ---   ---   ---   ---   ---")
         print("          classification proof done")
@@ -781,7 +794,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
             Dd.classificationproof(
                 Mstrat, Mlearn, 0, proving_instances, title_text
             )
-            HST.graph_history(self.Pp, "big")
+            self.HST.graph_history(self.Pp, "big")
         return
 
     #### the following function automates the process of choosing a collection of instances to do

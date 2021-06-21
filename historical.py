@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from constants import Dvc, torch_pi
+from parameters import Parameters
 from utils import CoherenceError, itp, nump, numpr
 
 
@@ -69,7 +70,7 @@ class Historical:
         self.current_proof_benchmark = 0
         return
 
-    def record_current_proof(self, benchmark=False):
+    def record_current_proof(self, Pp: Parameters, benchmark=False):
         if self.prcursor >= self.hlength_max:
             print("proof data recording overflow")
             return

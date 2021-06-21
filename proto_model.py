@@ -1,8 +1,9 @@
 import torch
-from torch import optim
+from torch import nn, optim
 
 from constants import Dvc
 from sgnet_global import SGNetGlobal
+from utils import arangeic, itt
 
 
 class ProtoModel:
