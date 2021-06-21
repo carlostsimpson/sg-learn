@@ -1,0 +1,62 @@
+from driver import Driver
+from historical import Historical
+from parameters import Parameters
+from proto_model import ProtoModel
+from sg_model import SgModel
+
+###### end of basic program cells ###############
+# def stopcompile():
+
+##### to set up the environment: please run this cell and enter the desired alpha,beta and model_n
+#####    ( first suggested values are alpha = 3, beta = 2 and model_n = 4 )
+
+HST = Historical(10000)
+HST.proof_nodes_max = (
+    100000  #  can be used to set the upper limit for proof lengths
+)
+#
+Pp = Parameters()  # this will ask for alpha, beta and model_n
+#
+Pp.basicloop_iterations = 3  # default is 3
+Pp.basicloop_training_iterations = 3  # default is 3
+#
+Dd = Driver(Pp)
+#
+# the following could be set to False to turn off those additional filters
+Pp.profile_filter_on = True  # the default is True
+Pp.halfones_filter_on = True  # the default is True
+#
+#####
+
+#####  please run this cell to (re)initialize the model
+#
+Mm = SgModel(Pp)
+Pp.spiral_mix_threshold = 4
+Mmr = ProtoModel(Pp, "spiral_mix")
+#
+
+######################################################################################
+########
+######## do a classificationproof with Mmr to set benchmark, then one with Mm for the first data point
+######## then do basicloop_classificationproof  for example for 50 iterations
+######## the basicloop_classificationproof can be repeated. Cumulative results are printed in the output
+########
+######## (a first suggested value for (alpha,beta)=(3,2) could be sigma = 3)
+########
+######################################################################################
+
+#####
+#
+proving_instances, training_instances, title_text = Dd.instance_chooser()
+#
+HST.reset()
+Dd.classificationproof(
+    Mmr, Mm, 0, proving_instances, title_text
+)  # sets the benchmark value into HST, using ProtoModel Mmr
+Dd.classificationproof(
+    Mm, Mm, 0, proving_instances, title_text
+)  # to record proof 0
+
+Dd.basicloop_classificationproof(
+    Mm, Mm, proving_instances, training_instances, title_text
+)
