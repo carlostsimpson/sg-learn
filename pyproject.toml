@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "sg-learn"
+version = "0.0.1"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.dev-dependencies]
+jedi = "0.17.2"
+rope = "*"
+pylint = "*"
+mypy = "*"
+pycodestyle = "*"
+jupyterlab = "*"
+flake8 = "*"
+black = "*"
+pre-commit = "*"
+
+[tool.black]
+line-length=79
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
