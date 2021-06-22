@@ -116,20 +116,7 @@ class Relations1:
         for p in range(bz):
             printarray += (10 ** p) * (prod[i, :, :, p].to(torch.int))
         print(nump(printarray))
-        return
 
-    def printrandomprods(self, Data, number):
-        length = Data["length"]
-        upper = number
-        if upper > length:
-            upper = length
-        indices = torch.randperm(length, device=Dvc)
-        for i in range(upper):
-            indexi = indices[i]
-            print("---------------------------------------")
-            self.printprod(Data, indexi)
-        print("---------------------------------------")
-        return
 
     def makebetazsubsets(self):
         b = self.beta
@@ -163,18 +150,6 @@ class Relations1:
                 Output[ky] = (Data[ky]).clone().detach()
         return Output
 
-    def duplicatedata(
-        self, Data
-    ):  # like copydata but it puts the same objects in place rather than clones
-        if Data["length"] == 0:
-            return self.nulldata()
-        Output = {}
-        Output["length"] = itt(Data["length"]).clone().detach()
-        for ky in Data.keys():
-            if ky != "length":
-                Output[ky] = Data[ky]
-        return Output
-
     def deletedata(self, Data):
         # del Data['length']  # better avoid doing that
         datakeyslist = list(Data.keys())
@@ -182,7 +157,6 @@ class Relations1:
             if ky != "length":
                 del Data[ky]
         del Data
-        return
 
     def appenddata(
         self, Data1, Data2
@@ -254,21 +228,6 @@ class Relations1:
                 Output[ky] = outputitem
         #
         return Output
-
-    #########################
-
-    def filterpossible(
-        self, Data
-    ):  # here we just filter out the impossible cases
-        #
-        length = Data["length"]
-        prod = Data["prod"]
-        #
-        prodstats = prod.to(torch.int).sum(3)
-        impossible = ((prodstats == 0).any(2)).any(1)
-        #
-        detection = ~impossible
-        return detection
 
     def knowledge(self, Data):  # now it increases as we refine
         a = self.alpha

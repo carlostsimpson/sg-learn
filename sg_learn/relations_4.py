@@ -168,12 +168,6 @@ class Relations4:
         self.DroppedSamplePool = self.rr1.appenddata(
             self.DroppedSamplePool, DroppedPool
         )
-        #
-        # print("sample pool has size",itp(self.SamplePool['length']))
-        # Fws.trace("transition samples Active Pool",ActivePool,5,0,0,0)
-        # Fws.trace("transition samples Sample Pool",self.SamplePool,5,0,0,0)
-        # self.printsampleex()
-        return
 
     def proofloop(self, Mstrat, Mlearn, C, Input, dropoutlimit):
         #
@@ -556,25 +550,3 @@ class Relations4:
             newsum = (extent[detection]).sum(0)
             droppedsum = (extent[~detection]).sum(0)
         return NewData, DroppedData, newsum, droppedsum
-
-    def printsampleex(self):
-        samplelength = self.SamplePool["length"]
-        if samplelength == 0:
-            return
-        upper = 20
-        if upper > samplelength:
-            upper = samplelength
-        permutation = torch.randperm(samplelength, device=Dvc)
-        depth = self.SamplePool["depth"]
-        points = self.SamplePool["info"][:, self.pp.samplepoints]
-        for i in range(upper):
-            ip = permutation[i]
-            print(
-                "number",
-                ip,
-                "depth",
-                itp(depth[ip]),
-                "points",
-                itp(points[ip]),
-            )
-        return

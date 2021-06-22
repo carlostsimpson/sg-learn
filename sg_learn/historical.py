@@ -219,13 +219,7 @@ class Historical:
         self.histi[cursor, 0] = self.D["Driver"]
         self.histi[cursor, 1] = alpha
         self.histi[cursor, 2] = beta
-        return
 
-    def record_model(self, n):
-        cursor = self.increment()
-        self.histi[cursor, 0] = self.D["Model"]
-        self.histi[cursor, 1] = n
-        return
 
     def record_loss(self, style, L1_loss, MSE_loss):
         cursor = self.increment()
@@ -300,104 +294,7 @@ class Historical:
         self.histi[cursor, 3] = steps
         ecnr = torch.round(ECN).to(torch.int64)
         self.histi[cursor, 4] = ecnr
-        return
 
-    def print_history(self):
-        length = self.hlength
-        print("--  --  --  --  --  --  --  --  --  --  --  --  --  --  --")
-        print("     printing history of length", itp(length))
-        print("--  --  --  --  --  --  --  --  --  --  --  --  --  --  --")
-        for cursor in range(length):
-            tag = self.histi[cursor, 0]
-            a = itp(self.histi[cursor, 1])
-            b = itp(self.histi[cursor, 2])
-            c = itp(self.histi[cursor, 3])
-            d = itp(self.histi[cursor, 4])
-            e = itp(self.histi[cursor, 5])
-            f = itp(self.histi[cursor, 6])
-            #
-            x = numpr(self.histf[cursor, 0], 3)
-            y = numpr(self.histf[cursor, 1], 3)
-            #
-            print("(", cursor, ")--", end="")
-            #
-            if tag == self.D["Parameters"]:
-                print("setting parameters for alpha=", a, "beta=", b)
-            #
-            if tag == self.D["Driver"]:
-                print("initialize driver for alpha=", a, "beta=", b)
-            #
-            if tag == self.D["Model"]:
-                print("initialize model with n =", a)
-            #
-            if tag == self.D["Loss"]:
-                if a == self.D["Global"]:
-                    print("test global model, L1 loss", x, "MSE loss", y)
-                if a == self.D["Local"]:
-                    print("test local model, L1 loss", x, "MSE loss", y)
-                if a == self.D["LocalCE"]:
-                    print("test local model, CE loss", x)
-            #
-            if tag == self.D["Training"]:
-                if a == self.D["Global"]:
-                    print("training global model", end=" ")
-                if a == self.D["Local"]:
-                    print("training local model", end=" ")
-                print(
-                    "iterations",
-                    b,
-                    "explore prepool",
-                    c,
-                    "example prepool",
-                    d,
-                    "example_pool",
-                    e,
-                )
-            #
-            if tag == self.D["BenchmarkProof"]:
-                print(
-                    "BENCHMARK PROOF in",
-                    a,
-                    "steps",
-                    b,
-                    "cumulative nodes",
-                    c,
-                    "done leaves",
-                )
-            #
-            if tag == self.D["FullProof"]:
-                print(
-                    "FULL PROOF in",
-                    a,
-                    "steps",
-                    b,
-                    "cumulative nodes",
-                    c,
-                    "done leaves",
-                )
-            #
-            if tag == self.D["DropoutProof"]:
-                print("proof with dropout style", end="")
-                if a == self.D["Regular"]:
-                    print(" regular ", end="")
-                if a == self.D["Adaptive"]:
-                    print(" adaptive ", end="")
-                if a == self.D["Uniform"]:
-                    print(" uniform ", end="")
-                print(
-                    "threshold",
-                    b,
-                    "in",
-                    c,
-                    "steps with estimated cumulative nodes",
-                    d,
-                )
-        #
-        print("--  --  --  --  --  --  --  --  --  --  --  --  --  --  --")
-        print("     end printing history of length", itp(length))
-        print("--  --  --  --  --  --  --  --  --  --  --  --  --  --  --")
-        #
-        return
 
     def graph_history(self, P, style):
         #

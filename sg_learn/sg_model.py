@@ -88,36 +88,3 @@ class SgModel:
                     p *= factor
         return
 
-    def save_model(
-        self, filename
-    ):  # tries to save the two model state dicts and optimizer state dicts
-        # I haven't tried these but they should probably mostly work and are included for reference
-        torch.save(
-            {
-                "network_state_dict": self.network.state_dict(),
-                "network2_state_dict": self.network2.state_dict(),
-                "optimizer_state_dict": self.optimizer.state_dict(),
-                "optimizer2_state_dict": self.optimizer2.state_dict(),
-            },
-            filename,
-        )
-        print("saved to", filename)
-        return
-
-    def load_model(self, filename):  # tries to load from the file
-        #
-        loadedmodels = torch.load(filename)
-        network_state_dict = loadedmodels["network_state_dict"]
-        network2_state_dict = loadedmodels["network2_state_dict"]
-        optimizer_state_dict = loadedmodels["optimizer_state_dict"]
-        optimizer2_state_dict = loadedmodels["optimizer2_state_dict"]
-        #
-        self.network.load_state_dict(network_state_dict)
-        self.network2.load_state_dict(network2_state_dict)
-        self.optimizer.load_state_dict(optimizer_state_dict)
-        self.optimizer2.load_state_dict(optimizer2_state_dict)
-        #
-        self.network.train()
-        self.network2.train()
-        print("loaded from", filename)
-        return

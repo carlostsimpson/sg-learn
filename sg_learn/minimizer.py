@@ -552,24 +552,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
                 break
         inplay_new = self.inplay[0:fdlength].to(torch.int64).sum(0)
 
-    def random_remove_from_play(self, threshold):
-        fdlength = self.FullData["length"]
-        tirage = torch.rand((fdlength), device=Dvc)
-        subset = tirage < threshold
-        subset[0] = False
-        self.remove_from_play(subset)
-        return
-
-    def leave_in_play(
-        self, instance
-    ):  # for now we assume that this is at the first stage
-        fdlength = self.FullData["length"]
-        subset = torch.ones((fdlength), dtype=torch.bool, device=Dvc)
-        subset[0] = False
-        subset[instance] = False
-        self.remove_from_play(subset)
-        return
-
     def initial_cut(self, x, y, p):
         fdlength = self.FullData["length"]
         # assert fdlength == 28
@@ -578,7 +560,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
         subset[0] = False
         subset[instance] = False
         self.remove_from_play(subset)
-        return
 
     def prune(self):
         #
@@ -743,71 +724,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
                 "lower and upper bounds should coincide. Add 1 to plug back into the previous cut location"
             )
             print("full data length was", itp(fdlength))
-            # self.show_neural_network_results()
-            #
         return True
-
-    def show_neural_network_results(
-        self,
-    ):  # not currently working, also our new network 2 has a different objective
-        #
-        fdlength = self.FullData["length"]
-        #
-        subset = torch.zeros((fdlength), dtype=torch.bool, device=Dvc)
-        subset[0:500] = True
-        TruncatedFullData = self.rr1.detectsubdata(self.FullData, subset)
-        fd_network_output = self.Mm.network(TruncatedFullData).detach()
-        net2 = M.network2(TruncatedFullData)
-        fd_network2_output = net2.detach()
-        #
-        fdn2_exp_rootv = (10 ** fd_network2_output[0]).view(
-            self.alpha * self.alpha
-        )
-        avxy_rootv = self.availablexy[0].view(self.alpha * self.alpha)
-        fdn2_exp_rootv[~avxy_rootv] = 0.0
-        fdn2_exp_rootmod = fdn2_exp_rootv.view(self.alpha, self.alpha)
-        print("network 2 output at root")
-        print(numpr(fdn2_exp_rootmod, 2))
-        #
-        cutx = self.cutx
-        cuty = self.cuty
-        cutp = self.cutp
-        cut_instance = self.down[0, cutx, cuty, cutp]
-        #
-        fd_network2_cut_instance = fd_network2_output[cut_instance]
-        fdn2_exp_v = (10 ** fd_network2_cut_instance).view(
-            self.alpha * self.alpha
-        )
-        print(
-            "network 2 gives the following matrix (after exponentiating base 10), unavailable = 0"
-        )
-        avxy_v = self.availablexy[cut_instance].view(self.alpha * self.alpha)
-        fdn2_exp_v[~avxy_v] = 0.0
-        fdn2_exp_mod = fdn2_exp_v.view(self.alpha, self.alpha)
-        print(numpr(fdn2_exp_mod, 2))
-        #
-        fdn_exp_sum = torch.zeros(
-            (self.alpha, self.alpha), dtype=torch.float, device=Dvc
-        )
-        for x in range(self.alpha):
-            for y in range(self.alpha):
-                if self.availablexy[cut_instance, x, y]:
-                    fdn_exp_sum[x, y] = 1.0
-                    for p in range(self.betaz):
-                        if self.availablexyp[cut_instance, x, y, p]:
-                            down_xyp = self.down[cut_instance, x, y, p]
-                            if down_xyp > 0:
-                                fdn_next_xyp = 10 ** (
-                                    fd_network_output[down_xyp]
-                                )
-                                fdn_exp_sum[x, y] += fdn_next_xyp
-        #
-        print(
-            "summing the results of the first network gives the following matrix"
-        )
-        print(numpr(fdn_exp_sum, 2))
-        print("= = = = = =")
-        return
 
     def combo_all(self):
         self.combo_init()

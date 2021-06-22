@@ -336,43 +336,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         #
         return clength, collec, collec_bin, possibilities, subgroup
 
-    def collectiontest(self, amount):
-        #
-        a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
-        #
-        #
-        clength, collec, collec_bin, possibilities, subgroup = self.collection(
-            b
-        )
-        print("collection has length", itp(clength))
-        upper = 20
-        if upper > clength:
-            upper = clength
-        print("first", itp(upper), "elements are as follows")
-        #
-        collec_sum = (collec_bin.to(torch.int64).sum(2)).sum(1)
-        collec_sum1 = collec_bin.to(torch.int64).sum(1)
-        collec_sum2 = collec_bin.to(torch.int64).sum(2)
-        for q in range(a * b + 1):
-            freq = (collec_sum == q).to(torch.int64).sum(0)
-            print("for amount", itp(q), "frequency", itp(freq))
-        amount_detect = collec_sum == amount
-        #
-        ad_freq = amount_detect.to(torch.int64).sum(0)
-        collec_detect = collec_bin[amount_detect]
-        print("ad freq", itp(ad_freq))
-        for i in range(ad_freq):
-            print("--------------------------")
-            print(numpi(collec_detect[i]))
-            print("collec_sum1", nump((collec_sum1[amount_detect])[i]))
-            print("collec_sum2", nump((collec_sum2[amount_detect])[i]))
-        return
-
     def lex_lt(self, width, z1, z2):
         #
         assert width > 0
@@ -438,15 +401,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         sieved_collection_bin = collec_bin[detection]
         #
         return sieved_length, sieved_collection, sieved_collection_bin
-
-    def sieve_test(self):
-        (
-            sieved_length,
-            sieved_collection,
-            sieved_collection_bin,
-        ) = self.collection_sieve()
-        print("sieved collection has length", itp(sieved_length))
-        return
 
     def make_init_left_table(self):
         #

@@ -82,51 +82,31 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         a = self.alpha
         #
         # thematrix = torch.zeros((a,a,a,a),dtype = torch.int64,device=Dvc)
-        for i in range(10):
+        for _ in range(10):
             permutation = torch.randperm((a * a * a * a), device=Dvc)
             psquared = permutation * permutation
             thematrix = psquared.view(a, a, a, a)
         return thematrix
 
     def geteq(self, Data):
-        #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a4 = self.alpha2 * self.alpha2
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
-        #
         length = Data["length"]
         prod = Data["prod"]
         #
         prodsum = prod.to(torch.int64).sum(3)
         #
         assert (((prodsum == 1).all(2)).all(1)).all(0)
-        #
-        values, table = torch.max(prod.to(torch.int64), 3)
-        #
+        _, table = torch.max(prod.to(torch.int64), 3)
         table1vx = table.view(length, a, a, 1, 1).expand(length, a, a, a, a)
         table2vx = table.view(length, 1, 1, a, a).expand(length, a, a, a, a)
         eq = table1vx == table2vx
-        iz = (table == b).view(length, a, a)
+        iz = (table == self.beta).view(length, a, a)
         return eq, iz
 
     def orderinvariantSlice(self, Data):
         #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a4 = self.alpha2 * self.alpha2
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
-        #
         length = Data["length"]
-        # print("at start of orderinvariantSlice, length is",length)
-        prod = Data["prod"]
-        #
         eq, iz = self.geteq(Data)
         #
         eqview = eq.view(1, length, a, a, a, a)
@@ -176,7 +156,7 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         invariant = torch.zeros((length, a), dtype=torch.int64, device=Dvc)
         #
         lower = 0
-        for i in range(length):
+        for _ in range(length):
             upper = lower + 100
             if upper > length:
                 upper = length
@@ -188,80 +168,6 @@ class Classifier:  # this is a very first part of classification up to isomorphi
                 break
         return invariant
 
-    def printtestinvariant(self, length, invariant):
-        #
-        a = self.alpha
-        #
-        assert length > 0
-        assert a > 1
-        #
-        invariant_sorted, indices = torch.sort(invariant, 1)
-        #
-        invariant_pre = invariant_sorted[:, 0 : a - 1]
-        invariant_post = invariant_sorted[:, 1:a]
-        invariant_delta = invariant_post - invariant_pre
-        #
-        assert ((invariant_delta >= 0).all(1)).all(0)
-        delta_avg = (invariant_delta.sum(1)).sum(0).to(torch.float) / (
-            itf(length) * itf(a - 1)
-        )
-        #
-        delta_sum = (invariant_delta == 0).to(torch.int64).sum(1)
-        print(
-            "invariant delta average is",
-            numpr(delta_avg, 1),
-            "for length",
-            itp(length),
-        )
-        for k in range(a - 1):
-            locnumber = (delta_sum == k).to(torch.int64).sum(0)
-            print(
-                "number of locations with delta sum",
-                itp(k),
-                "is",
-                itp(locnumber),
-            )
-        return
-
-    def matrixinvariant(self, Data, ivector, gvector):
-        #
-        a = self.alpha
-        #
-        length = Data["length"]
-        #
-        eq, iz = self.geteq(Data)
-        #
-        vlength = len(ivector)
-        assert len(gvector) == vlength
-        #
-        irangevx = ivector.view(vlength, 1, 1, 1, 1).expand(
-            vlength, a, a, a, a
-        )
-        grangevx = gvector.view(vlength, 1, 1, 1, 1).expand(
-            vlength, a, a, a, a
-        )
-        xrangevx = arangeic(a).view(1, a, 1, 1, 1).expand(vlength, a, a, a, a)
-        yrangevx = arangeic(a).view(1, 1, a, 1, 1).expand(vlength, a, a, a, a)
-        zrangevx = arangeic(a).view(1, 1, 1, a, 1).expand(vlength, a, a, a, a)
-        wrangevx = arangeic(a).view(1, 1, 1, 1, a).expand(vlength, a, a, a, a)
-        #
-        xtransform = self.sga.grouptable[grangevx, xrangevx]
-        ytransform = self.sga.grouptable[grangevx, yrangevx]
-        ztransform = self.sga.grouptable[grangevx, zrangevx]
-        wtransform = self.sga.grouptable[grangevx, wrangevx]
-        #
-        eq_transform = eq[
-            irangevx, xtransform, ytransform, ztransform, wtransform
-        ]
-        #
-        matrixvx = self.matrix.view(1, a, a, a, a).expand(vlength, a, a, a, a)
-        matrix_invariant = (
-            ((eq_transform.to(torch.int64)) * matrixvx)
-            .view(vlength, a * a * a * a)
-            .sum(1)
-        )
-        #
-        return matrix_invariant
 
     def to_eqfunction(self, length, eq, iz):
         #
@@ -274,25 +180,10 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         numerical = arangeic(a2).view(1, a2).expand(length * a2, a2) + 1
         numerical_eq = numerical * (eqview.to(torch.int64))
         #
-        values, eqfunctionv = torch.max(numerical_eq, 1)
+        _, eqfunctionv = torch.max(numerical_eq, 1)
         eqfunctionv[izview] = a2
         eqfunction = eqfunctionv.view(length, a2)
         return eqfunction
-
-    def from_eqfunction(self, length, eqfunction):
-        #
-        #
-        a = self.alpha
-        a2 = a * a
-        #
-        eqf1vx = eqfunction.view(length, a2, 1).expand(length, a2, a2)
-        eqf2vx = eqfunction.view(length, 1, a2).expand(length, a2, a2)
-        #
-        eq = eqf1vx == eqf2vx
-        #
-        iz = eqfunction.view(length, a2) == a2
-        #
-        return eq, iz
 
     def transform_eqfunction(self, length, eq, iz, gvector):
         #
@@ -342,10 +233,6 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         return eqfunction_transform
 
     def data_eqfunction_transform(self, Data, ivector, gvector):
-        #
-        a = self.alpha
-        a2 = a * a
-        #
         DataVector = self.rr1.indexselectdata(Data, ivector)
         length = DataVector["length"]
         #
@@ -423,7 +310,7 @@ class Classifier:  # this is a very first part of classification up to isomorphi
             return
         #
         lower = 0
-        for i in range(length):
+        for _ in range(length):
             upper = lower + 500
             if upper > length:
                 upper = length
@@ -433,28 +320,7 @@ class Classifier:  # this is a very first part of classification up to isomorphi
             lower = upper
             if lower >= length:
                 break
-        return
 
-    def processBasic(self, Data):
-        #
-        a = self.alpha
-        assert a > 1
-        #
-        length = Data["length"]
-        print(
-            "current eqlength",
-            itp(self.eqlength),
-            "processing data of length",
-            itp(length),
-        )
-        #
-        eq, iz = self.geteq(Data)
-        #
-        eq_function = self.to_eqfunction(length, eq, iz)
-        #
-        self.addinstances(length, eq_function)
-        #
-        return
 
     def process(self, Data):
         #
@@ -501,142 +367,3 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         eq_function = self.data_eqfunction_transform(Data, ivector, gvector)
         #
         self.addinstances(dlength, eq_function)
-        #
-        return
-
-    def checklocationSlice(self, length, eq_function):
-        #
-        a = self.alpha
-        a2 = a * a
-        #
-        location = torch.zeros((length), dtype=torch.int64, device=Dvc)
-        location[:] = -1
-        #
-        alength = self.eqlength
-        #
-        predetect_already = (self.eqlist.view(alength, a2)).sum(1)
-        predetect_current = (eq_function.view(length, a2)).sum(1)
-        predetect_already_vxr = (
-            predetect_already.view(alength, 1)
-            .expand(alength, length)
-            .reshape(alength * length)
-        )
-        predetect_current_vxr = (
-            predetect_current.view(1, length)
-            .expand(alength, length)
-            .reshape(alength * length)
-        )
-        #
-        predetection = predetect_already_vxr == predetect_current_vxr
-        #
-        alrangevxr = (
-            arangeic(alength)
-            .view(alength, 1)
-            .expand(alength, length)
-            .reshape(alength * length)
-        )
-        lrangevxr = (
-            arangeic(length)
-            .view(1, length)
-            .expand(alength, length)
-            .reshape(alength * length)
-        )
-        #
-        alrvector = alrangevxr[predetection]
-        currvector = lrangevxr[predetection]
-        #
-        eq_already = (self.eqlist.view(alength, a2))[alrvector]
-        eq_current = (eq_function.view(length, a2))[currvector]
-        #
-        detection = (eq_already == eq_current).all(1)
-        #
-        already_detected = alrvector[detection]
-        current_detected = currvector[detection]
-        #
-        location[current_detected] = already_detected
-        #
-        return location
-
-    def checklocation(self, length, eq_function):
-        #
-        a = self.alpha
-        a2 = a * a
-        #
-        location = torch.zeros((length), dtype=torch.int64, device=Dvc)
-        #
-        lower = 0
-        for i in range(length):
-            upper = lower + 100
-            if upper > length:
-                upper = length
-            length_slice = upper - lower
-            eq_slice = eq_function[lower:upper]
-            location[lower:upper] = self.checklocationSlice(
-                length_slice, eq_slice
-            )
-            lower = upper
-            if lower >= length:
-                break
-        return location
-
-    def highestlocation(self, length, eq_function):
-        #
-        a = self.alpha
-        a2 = a * a
-        #
-        gl = self.sga.gtlength
-        #
-        eq_vxr = (
-            eq_function.view(length, 1, a2)
-            .expand(length, gl, a2)
-            .reshape(length * gl, a2)
-        )
-        gvector = (
-            arangeic(gl).view(1, gl).expand(length, gl).reshape(length * gl)
-        )
-        grouplength = length * gl
-        #
-        eq, iz = self.from_eqfunction(grouplength, eq_vxr)
-        eq_transform = self.transform_eqfunction(grouplength, eq, iz, gvector)
-        #
-        location = self.checklocation(grouplength, eq_transform)
-        locationv = location.view(length, gl)
-        highest, indices = torch.max(locationv, 1)
-        return highest
-
-    def sieve(self):
-        #
-        alength = self.eqlength
-        print("doing sieve on", itp(alength), "locations")
-        #
-        highest_location = torch.zeros(
-            (alength), dtype=torch.int64, device=Dvc
-        )
-        #
-        lower = 0
-        for i in range(alength):
-            print("---", lower)
-            upper = lower + 100
-            if upper > alength:
-                upper = alength
-            eq_slice = self.eqlist[lower:upper]
-            length_slice = upper - lower
-            #
-            highest_location[lower:upper] = self.highestlocation(
-                length_slice, eq_slice
-            )
-            lower = upper
-            if lower >= alength:
-                break
-        #
-        negative_detect = highest_location < 0
-        negative_count = negative_detect.to(torch.int64).sum(0)
-        print(
-            "unfortunate locations with negative values :", itp(negative_count)
-        )
-        alrange = arangeic(alength)
-        good_detect = highest_location <= alrange
-        good_count = good_detect.to(torch.int64).sum(0)
-        print("detected", itp(good_count), "good locations")
-        print("finished sieve")
-        return

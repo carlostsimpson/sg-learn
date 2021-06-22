@@ -296,7 +296,7 @@ class Learner:  # training the neural networks
             "transfering outlier data of length", itp(TransferData["length"])
         )
         #
-        xyscore_log, xyscore_min, LocalExamples = self.calculatescoresLocal(
+        xyscore_log, xyscore_min, _ = self.calculatescoresLocal(
             M, TransferData
         )
         #
@@ -330,8 +330,7 @@ class Learner:  # training the neural networks
         delta_abs = torch.abs((availablexyf * (xyscore_log - predicted))).view(
             length, a2
         )
-        delta_sup, indices = torch.max(delta_abs, 1)
-        return delta_sup
+        return torch.max(delta_abs, 1)[0]
 
     def addscoredexamples(self, M):
         SamplePool = self.rr4.SamplePool
@@ -421,7 +420,7 @@ class Learner:  # training the neural networks
             (self.ExamplesPrePool["length"]), dtype=torch.bool, device=Dvc
         )
         #
-        xyscore_log, xyscore_min, LocalExamples = self.calculatescoresLocal(
+        xyscore_log, xyscore_min, _ = self.calculatescoresLocal(
             M, TransferData
         )
         #
@@ -447,14 +446,8 @@ class Learner:  # training the neural networks
         return ntensor
 
     def noise(self, Data):
-        #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
         length = Data["length"]
         prodv = Data["prod"].view(length * a * a * bz)
         leftv = Data["left"].view(length * a * bz * 2)
@@ -473,35 +466,6 @@ class Learner:  # training the neural networks
         NoiseData["ternary"] = nternary
         #
         return NoiseData
-
-    def printexamplescores(self, number):
-        ExamplePool = self.Examples
-        xplength = ExamplePool["length"]
-        xpdepth = ExamplePool["depth"]
-        if xplength == 0:
-            print("no examples to print")
-            return
-        #
-        print("example pool has", itp(xplength), "elements")
-        #
-        permutation = torch.randperm(xplength, device=Dvc)
-        #
-        upper = number
-        if upper > xplength:
-            upper = xplength
-        for i in range(upper):
-            ip = permutation[i]
-            idepth = xpdepth[ip]
-            iextent = self.extent_log[ip]
-            print(
-                "sample number",
-                itp(ip),
-                "depth",
-                itp(idepth),
-                "log extent",
-                numpr(iextent, 2),
-            )
-        return
 
     def selectminibatch(self, minibatchsize):
         ExamplePool = self.Examples
@@ -545,13 +509,13 @@ class Learner:  # training the neural networks
                 "/",
                 end=" ",
             )
-        for s in range(numberofbatches):
+        for _ in range(numberofbatches):
             smb, DataBatch, scorebatch = self.selectminibatch(minibatchsize)
             if not smb:
                 print("exit training")
                 return
             #
-            for i in range(iterationsperbatch):
+            for _ in range(iterationsperbatch):
                 #
                 M.optimizer.zero_grad()
                 #
@@ -616,7 +580,7 @@ class Learner:  # training the neural networks
             calcscore_npr = numpr(scorebatch, 3)
             predscore_npr = numpr(predictedscore, 3)
             #
-            scoremax, index = torch.max(scorebatch, 0)
+            scoremax, _ = torch.max(scorebatch, 0)
             linelimit = numpr(scoremax, 1)
             #
             #
@@ -664,7 +628,7 @@ class Learner:  # training the neural networks
             example_length,
         )
         #
-        for g in range(globaliterations):
+        for _ in range(globaliterations):
             print("/", end=" ")
             self.trainingGlobal(M, 2, 20, "score-C", 20, "mb20")
             self.trainingGlobal(M, 1, 30, "score-C", 30, "mb30")
@@ -684,14 +648,9 @@ class Learner:  # training the neural networks
     # Local stuff
 
     def calculatescoresLocal(self, M, Data):
-        #
         a = self.alpha
         a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
         length = Data["length"]
         prod = Data["prod"]
         #
@@ -746,7 +705,7 @@ class Learner:  # training the neural networks
         # that should be the (approximation of) the number of nodes below and including that node resulting from (i,x,y,p)
         newactive = torch.zeros((ndlength), dtype=torch.bool, device=Dvc)
         lower = 0
-        for i in range(ndlength):
+        for _ in range(ndlength):
             assert lower < ndlength
             upper = lower + 1000
             if upper > ndlength:
@@ -793,48 +752,13 @@ class Learner:  # training the neural networks
         xyscorer = xyscore_log.view(length * a2)
         xyscorer_mod = torch.clamp(xyscorer, 0.0, 8.0)
         xyscorer_mod[~availablexyr] = 20.0
-        xyscore_min, xysm_indices = torch.min(xyscorer_mod.view(length, a2), 1)
+        xyscore_min, _ = torch.min(xyscorer_mod.view(length, a2), 1)
         assert (xyscore_min < 10.0).all(0)
         #
         return xyscore_log, xyscore_min, LocalExamples
 
-    def printsomelocalscores(self, howmany):
-        elength = self.Examples["length"]
-        if elength == 0:
-            print("no examples")
-            return
-        lsk = self.localscores_known
-        detection = lsk
-        detection_length = detection.to(torch.int64).sum(0)
-        if detection_length == 0:
-            print("no known score locations to print")
-            return
-        ivector = arangeic(elength)[detection]
-        permutation = torch.randperm(detection_length, device=Dvc)
-        upper = howmany
-        if upper > detection_length:
-            upper = detection_length
-        indices_pre = permutation[0:upper]
-        indices = ivector[indices_pre]
-        #
-        assert detection[indices].all(0)
-        #
-        for i in range(upper):
-            indexi = indices[i]
-            lsi = self.localscores[indexi]
-            print(numpr(lsi, 2))
-        return
-
     def predictedscoreLocal(self, M, ivector, xvector, yvector):
-        #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
-        #
-        #
         length = self.Examples["length"]
         prod = self.Examples["prod"]
         #
@@ -849,22 +773,11 @@ class Learner:  # training the neural networks
         NoiseData = self.noise(Data)
         #
         pre_score = M.network2(NoiseData)
-        #
-        dlrangevxa = dlrange.view(dlength, 1).expand(dlength, a)
-        arangevx = arangeic(a).view(1, a).expand(dlength, a)
-        #
         predictedscore = pre_score[dlrange, xvector, yvector]
         return predictedscore
 
     def adapt_local_scores(self, ivector, xvector, yvector):
-        #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
-        #
         ExamplePool = self.Examples
         #
         length = len(ivector)
@@ -886,8 +799,7 @@ class Learner:  # training the neural networks
         #
         score = self.localscores[ivector].reshape(length * a * a)
         score[~availablexyv] = 100.0
-        values, indices = torch.sort(score.view(length, a * a), 1)
-        #
+        _, indices = torch.sort(score.view(length, a * a), 1)
         position = torch.zeros((length, a * a), dtype=torch.float, device=Dvc)
         #
         lrangevx = arangeic(length).view(length, 1).expand(length, a * a)
@@ -904,14 +816,7 @@ class Learner:  # training the neural networks
         return adapted_score
 
     def selectminibatchLocal(self, minibatchsize):
-        #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
-        #
         ExamplePool = self.Examples
         xplength = ExamplePool["length"]
         if xplength == 0:
@@ -971,9 +876,6 @@ class Learner:  # training the neural networks
         minibatchsize,
         partname,
     ):
-        #
-        a = self.alpha
-        #
         if style != "score-A" and style != "score-B" and style != "score-C":
             raise CoherenceError(
                 "only allowed styles are score-A or score-B or score-C"
@@ -989,7 +891,7 @@ class Learner:  # training the neural networks
                 "/",
                 end=" ",
             )
-        for s in range(numberofbatches):
+        for _ in range(numberofbatches):
             (
                 smb,
                 ivector,
@@ -1001,7 +903,7 @@ class Learner:  # training the neural networks
                 print("exit training")
                 return
             #
-            for i in range(iterationsperbatch):
+            for _ in range(iterationsperbatch):
                 #
                 M.optimizer2.zero_grad()
                 #
@@ -1022,9 +924,6 @@ class Learner:  # training the neural networks
         return
 
     def printlossaftertrainingLocal(self, M, minibatchsize, topicture):
-        #
-        a = M.pp.alpha
-        #
         smb, ivector, xvector, yvector, scorebatch = self.selectminibatchLocal(
             minibatchsize
         )
@@ -1069,7 +968,7 @@ class Learner:  # training the neural networks
             calcscore_npr = numpr(scorebatch, 3)
             predscore_npr = numpr(predictedscore, 3)
             #
-            scoremax, index = torch.max(scorebatch, 0)
+            scoremax, _ = torch.max(scorebatch, 0)
             linelimit = numpr(scoremax, 1)
             #
             plt.clf()
@@ -1118,7 +1017,7 @@ class Learner:  # training the neural networks
             example_length,
         )
         #
-        for g in range(globaliterations):
+        for _ in range(globaliterations):
             print("/", end=" ")
             self.trainingLocal(M, 3, 20, "score-C", 20, "mb20")
             self.trainingLocal(M, 1, 15, "score-C", 30, "mb30")

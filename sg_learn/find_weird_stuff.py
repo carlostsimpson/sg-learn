@@ -297,16 +297,3 @@ class FindWeirdStuff:
         trprod = self.split_by_hand(InitialData, 0, x, y, p)
         #
         self.tracer(trprod)
-        #
-        return
-
-    def trace(self, stringtoprint, Data, sigma, x, y, p):
-        #
-        instancevector, trainingvector, title_text = self.Dd.InOne(sigma)
-        InitialData = self.Dd.initialdata(instancevector, 0)
-        #
-        trprod = self.split_by_hand(InitialData, 0, x, y, p)
-        #
-        print(stringtoprint, end=" ")
-        dl, di = self.searchprod(Data, trprod)
-        return

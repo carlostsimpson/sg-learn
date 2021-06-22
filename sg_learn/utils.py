@@ -50,24 +50,11 @@ def zbinary(
     return outputarray
 
 
-def binaryz(depth, binarray):
-    thez = 0
-    for i in range(depth):
-        thez += binarray.to(torch.int)[i] * 2 ** i
-    return thez
-
-
 def binaryzbatch(length, depth, binarray_batch):
     zbatch = torch.zeros((length), dtype=torch.int64, device=Dvc)
     for i in range(depth):
         zbatch += binarray_batch.to(torch.int)[:, i] * (2 ** i)
     return zbatch
-
-
-def composepermutations(vector1, vector2):
-    vector2i64 = vector2.to(torch.int64)
-    composition = vector1[vector2i64]
-    return composition
 
 
 def composedetections(
@@ -138,13 +125,6 @@ def itt(x):  # integer to torch
 
 def itf(x):  # integer to torch.float
     return itt(x).to(torch.float)
-
-
-def tdetach(x):
-    if torch.is_tensor(x):
-        return x.detach()
-    else:
-        return x
 
 
 def nump(x):
