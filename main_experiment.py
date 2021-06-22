@@ -9,7 +9,7 @@ from proto_model import ProtoModel
 from sg_model import SgModel
 
 HST = Historical(10000)
-#  can be used to set the upper limit for proof lengths
+# can be used to set the upper limit for proof lengths
 HST.proof_nodes_max = 100000
 
 # this will ask for alpha, beta and model_n
