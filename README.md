@@ -15,5 +15,8 @@ Use-cases that can be done on cpu include (3,2,1,1), (3,3,1,1), (4,2,1,1) and ma
 For these, model_n = 4 should be sufficient. 
 On GPU I've done up to (5,3,1,1) and (4,5,1,1), for these use model_n = 6 or 8. 
 
+One can also run the same experiments in a form of a script. For example, to run the first part of the notebook:
 
-
+```shell
+python sg_learn/main_experiment.py
+```
