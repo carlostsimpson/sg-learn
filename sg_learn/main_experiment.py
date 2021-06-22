@@ -40,7 +40,7 @@ proving_instances, training_instances, title_text = Dd.instance_chooser()
 HST.reset()
 # sets the benchmark value into HST, using ProtoModel Mmr
 Dd.classificationproof(Mmr, Mm, 0, proving_instances, title_text)
-# to record proof 0
+# # to record proof 0
 Dd.classificationproof(Mm, Mm, 0, proving_instances, title_text)
 Dd.basicloop_classificationproof(
     Mm, Mm, proving_instances, training_instances, title_text

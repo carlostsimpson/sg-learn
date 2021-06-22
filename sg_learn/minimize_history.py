@@ -2,17 +2,19 @@ import torch
 
 from constants import Dvc
 from driver import Driver
+from historical import Historical
+from minimizer import Minimizer
 from relations_4 import Relations4
 from utils import itp, nump
 
 
 class MinimizerHistory:  # this becomes the first element of the relations datatype
-    def __init__(self, model):
+    def __init__(self, model, HST: Historical):
         #
         #
         self.Mm = model
         self.Pp = self.Mm.pp
-        self.Dd = Driver(self.Pp)
+        self.Dd = Driver(self.Pp, HST)
         #
         sigma = int(input("input sigma : "))
         self.sigma = sigma
@@ -26,7 +28,7 @@ class MinimizerHistory:  # this becomes the first element of the relations datat
         )
 
         #
-        self.rr4 = Relations4(self.Pp)
+        self.rr4 = Relations4(self.Pp, HST)
         self.rr3 = self.rr4.rr3
         self.rr2 = self.rr4.rr2
         self.rr1 = self.rr4.rr1
@@ -54,7 +56,7 @@ class MinimizerHistory:  # this becomes the first element of the relations datat
         results_sum = self.results.sum(2)
         #
         minimal = results_sum[0, 0]
- for x in range(self.alpha):
+        for x in range(self.alpha):
             for y in range(self.alpha):
                 if results_sum[x, y] < minimal:
                     minimal = results_sum[x, y]

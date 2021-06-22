@@ -19,6 +19,7 @@ jupyterlab = "*"
 flake8 = "*"
 black = "*"
 pre-commit = "*"
+vulture = "*"
 
 [tool.black]
 line-length=79
