@@ -2,8 +2,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from constants import Dvc, torch_pi
-from parameters import Parameters
-from utils import CoherenceError, itp, nump, numpr
+from utils import CoherenceError, arangeic, itp, nump, numpr
 
 
 class Historical:
@@ -70,7 +69,10 @@ class Historical:
         self.current_proof_benchmark = 0
         return
 
-    def record_current_proof(self, Pp: Parameters, benchmark=False):
+    def record_current_proof(self, Pp, benchmark=False):
+        """
+        :param Pp: Parameters
+        """
         if self.prcursor >= self.hlength_max:
             print("proof data recording overflow")
             return
@@ -425,7 +427,7 @@ class Historical:
         else:
             plt.figure(figsize=(8, 4))
         ###
-        phrase1 = f"Proofs for a= {alpha}, b={beta} for model with n= {nu} and heuristic baseline, {HST.title_text_sigma_proof}"
+        phrase1 = f"Proofs for a= {alpha}, b={beta} for model with n= {nu} and heuristic baseline, {self.title_text_sigma_proof}"
         phrase2 = f"with {bl_iter} basic loops per proof and {bl_train} training segments per basic loop, profile filter {prof_filt}, halfones filter {ho_filt}"
         phrase3 = f"global model has {global_p} and local rank+score model has {local_p} trainable parameters"
         plt.title(phrase1 + "\n" + phrase2 + "\n" + phrase3)
@@ -514,7 +516,7 @@ class Historical:
         CEavg_local = torch.clamp(CEavg_local, 0.0, 0.2)
         #
         #
-        noiselevel = HST.noiselevel(P, measurements_global)
+        noiselevel = self.noiselevel(P, measurements_global)
         #
         plt.clf()
         if style == "big":
@@ -522,7 +524,7 @@ class Historical:
         else:
             plt.figure(figsize=(8, 4))
         ###
-        phrase1b = f"Training for a= {alpha}, b={beta} for model with n= {nu}, {HST.title_text_sigma_train}"
+        phrase1b = f"Training for a= {alpha}, b={beta} for model with n= {nu}, {self.title_text_sigma_train}"
         # phrase 2 is the same as before
         plt.title(phrase1b + "\n" + phrase2 + "\n" + phrase3)
         ###

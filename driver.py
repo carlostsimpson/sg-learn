@@ -48,7 +48,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         #
         self.Cc = Classifier(self.Pp, HST)
         #
-        self.Ll = Learner(self.rr4)
+        self.Ll = Learner(self.rr4, HST)
         #
         self.HST = HST
         self.HST.record_driver(self.alpha, self.beta)
@@ -706,7 +706,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         #
         dropout2 = 300
         #
-        HST.title_text_sigma_train = title_text
+        self.HST.title_text_sigma_train = title_text
         #
         for i in range(self.Pp.basicloop_iterations):
             print(
@@ -789,9 +789,9 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         print("suggested number of proof cycles: between 20 and 50")
         runs = int(input("input the number of proof cycles to do : "))
         for s in range(runs):
-            Dd.basicloop(Mstrat, Mlearn, training_instances, title_text)
+            self.basicloop(Mstrat, Mlearn, training_instances, title_text)
             print(">>>", s + 1, "   (out of ", runs, " )")
-            Dd.classificationproof(
+            self.classificationproof(
                 Mstrat, Mlearn, 0, proving_instances, title_text
             )
             self.HST.graph_history(self.Pp, "big")

@@ -1,7 +1,16 @@
+import torch
+from matplotlib import pyplot as plt
+
+from constants import Dvc
+from historical import Historical
+from utils import CoherenceError, arangeic, itf, itp, nump, numpr
+
+
 class Learner:  # training the neural networks
-    def __init__(self, Rr4):
+    def __init__(self, Rr4, HST: Historical):
         #
         #
+        self.HST = HST
         self.rr4 = Rr4
         self.pp = self.rr4.pp
         self.rr3 = self.rr4.rr3
@@ -413,8 +422,8 @@ class Learner:  # training the neural networks
         #
         length = len(thetensor)
         tirage = torch.rand(length, device=Dvc)
-        noiselevel = HST.noiselevel(
-            self.pp, torch.tensor(HST.training_counter, device=Dvc)
+        noiselevel = self.HST.noiselevel(
+            self.pp, torch.tensor(self.HST.training_counter, device=Dvc)
         ).item()
         bruit = tirage < noiselevel
         ntensor = ((~bruit) & thetensor) | (bruit & (~thetensor))
@@ -581,7 +590,7 @@ class Learner:  # training the neural networks
             #
             print("global L1 loss level", numpr(self.globalL1level, 4))
             #
-            HST.record_loss("global", lossa, lossb)
+            self.HST.record_loss("global", lossa, lossb)
             #
             dotsize = torch.zeros((mblength), dtype=torch.int, device=Dvc)
             dotsize[:] = 2
@@ -607,14 +616,14 @@ class Learner:  # training the neural networks
         #
         self.printlossaftertrainingGlobal(M, 500, True)
         #
-        tweak_cursor = HST.global_tweak_cursor
+        tweak_cursor = self.HST.global_tweak_cursor
         tdensity = self.pp.tweak_density * (
             self.pp.tweak_decay ** tweak_cursor
         )
         tepsilon = self.pp.tweak_epsilon * (
             self.pp.tweak_decay ** tweak_cursor
         )
-        HST.global_tweak_cursor += 1
+        self.HST.global_tweak_cursor += 1
         print(
             "tweaking global network at cursor",
             itp(tweak_cursor),
@@ -630,7 +639,7 @@ class Learner:  # training the neural networks
         explore_pre_length = self.ExplorePrePool["length"]
         example_pre_length = self.ExamplesPrePool["length"]
         example_length = self.Examples["length"]
-        HST.record_training(
+        self.HST.record_training(
             "global",
             globaliterations,
             explore_pre_length,
@@ -742,7 +751,7 @@ class Learner:  # training the neural networks
             #
             predictedscore_s = M.network(AssocNewDataSlice).detach()
             if torch.isnan(predictedscore_s).any(0):
-                raise CoherenceException("predicted score nan")
+                raise CoherenceError("predicted score nan")
             # recall that approximates log10 of (the number of nodes below and including that node)
             predictedscore_s_clamp = torch.clamp(predictedscore_s, 0.0, 8.0)
             predictedscore_s_exp = 10.0 ** predictedscore_s_clamp
@@ -1032,7 +1041,7 @@ class Learner:  # training the neural networks
         #
         if topicture:
             #
-            HST.record_loss("local", lossa, lossb)
+            self.HST.record_loss("local", lossa, lossb)
             #
             print("average local loss", numpr(M.average_local_loss, 4))
             #
@@ -1061,14 +1070,14 @@ class Learner:  # training the neural networks
         #
         self.printlossaftertrainingLocal(M, 500, True)
         #
-        tweak_cursor = HST.local_tweak_cursor
+        tweak_cursor = self.HST.local_tweak_cursor
         tdensity = self.pp.tweak_density * (
             self.pp.tweak_decay ** tweak_cursor
         )
         tepsilon = self.pp.tweak_epsilon * (
             self.pp.tweak_decay ** tweak_cursor
         )
-        HST.local_tweak_cursor += 1
+        self.HST.local_tweak_cursor += 1
         print(
             "tweaking local network at cursor",
             itp(tweak_cursor),
@@ -1084,7 +1093,7 @@ class Learner:  # training the neural networks
         explore_pre_length = self.ExplorePrePool["length"]
         example_pre_length = self.ExamplesPrePool["length"]
         example_length = self.Examples["length"]
-        HST.record_training(
+        self.HST.record_training(
             "local",
             globaliterations,
             explore_pre_length,
