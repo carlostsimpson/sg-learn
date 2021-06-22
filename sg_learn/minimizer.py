@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -15,8 +15,8 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-#### next: the class used to prove the theoretical minimum (this is for alpha,beta = 3,2)
-#### note that the parameters and model should be initialized for (3,2)
+# next: the class used to prove the theoretical minimum (this is for alpha,beta = 3,2)
+# note that the parameters and model should be initialized for (3,2)
 
 import gc
 
@@ -133,7 +133,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
         if avxyp_denom < 0.1:
             avxyp_denom = 1.0
         availablexyp_average = avxyp_amount / avxyp_denom
-        ##print("average available xyp is",numpr(availablexyp_average,2))
         #
         lrangevxr = (
             arangeic(length)
@@ -257,9 +256,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
         self.FullData["info"][:, self.Pp.fulldata_location] = arangeic(
             new_fdlength
         )
-        #
-        ##print("initialized full data that now has length",itp(new_fdlength))
-        return
 
     def manage_next_stage(self):
         #
@@ -348,9 +344,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
         self.FullData["info"][:, self.Pp.fulldata_location] = arangeic(
             new_fdlength
         )
-        #
-        ##print("added",itp(newactive_length),"new instances to full data that now has length",itp(new_fdlength))
-        return
 
     def fd_location(self, Data):
         length = Data["length"]
@@ -371,10 +364,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
         ActivePool = self.rr1.detectsubdata(InitialActiveData, activedetect)
         #
         stepcount = 0
-        #
-        ##print("at step",itp(stepcount),"currently proof nodes for fd instances in question are:")
-        ##print(nump(self.upperbound[fd_instances]))
-        #
         for i in range(self.rr4.prooflooplength):
             stepcount += 1
             prooflength = i
@@ -398,12 +387,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
                 ActivePool = self.rr4.transitionactive(
                     ActivePool, cdetection, ProofCurrentData
                 )
-                # do the following before dropout
-                # if dropoutlimit == 0:
-                # EDN = itt(ActivePool['length']).clone().to(torch.float)
-                # self.ECN += itt(CurrentData['length']).clone().to(torch.float)
-                # this from proofloop indicates that we should add to our node counts the nodes in current data
-                #
                 if ProofCurrentData["length"] > 0:
                     current_fd_location = self.fd_location(ProofCurrentData)
                     fd_loc_list, fd_loc_counts = torch.unique(
@@ -412,10 +395,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
                     self.upperbound[fd_loc_list] = (
                         self.upperbound[fd_loc_list] + fd_loc_counts
                     )
-                #
-                ##print("at step",itp(stepcount),"currently proof nodes for fd instances in question are:")
-                ##print(nump(self.upperbound[fd_instances]))
-                #
                 gcc = gc.collect()
                 #
                 if ActivePool["length"] == 0:
@@ -434,11 +413,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
             #
         #
         print("|||")
-        #
-        ##print("proofs finished, resulting in proof nodes for fd instances in question as follows:")
-        ##print(nump(self.upperbound[fd_instances]))
-        #
-        return
 
     def calculate_current_upperbound(self):
         fdlength = self.FullData["length"]
@@ -539,15 +513,8 @@ class Minimizer:  # this becomes the first element of the relations datatype
         fd_upperbound_new = fd_upperbound.clone()
         fd_lowerbound_new[fd_lookat] = fd_lowerbound_min[fd_lookat]
         fd_upperbound_new[fd_lookat] = fd_upperbound_min[fd_lookat]
-        #
-        ##print("new lower bound")
-        ##print(nump(fd_lowerbound_new))
-        ##print("new upper bound")
-        ##print(nump(fd_upperbound_new))
-        #
         self.lowerbound[0:fdlength] = fd_lowerbound_new
         self.upperbound[0:fdlength] = fd_upperbound_new
-        return
 
     def recursive_bound(self, iterations):
         #
@@ -556,21 +523,15 @@ class Minimizer:  # this becomes the first element of the relations datatype
         #
         lower_all = self.lowerbound[0:fdlength].sum(0)
         upper_all = self.upperbound[0:fdlength].sum(0)
-        ##print("init with lower sum",itp(lower_all),"upper sum",itp(upper_all))
         for i in range(iterations):
             self.recursive_bound_step()
             lower_new = self.lowerbound[0:fdlength].sum(0)
             upper_new = self.upperbound[0:fdlength].sum(0)
-            ##print("iteration",i,"with lower sum",itp(lower_new),"upper sum",itp(upper_new))
-            #
             if lower_new == lower_all and upper_new == upper_all:
-                ##print("stabilizes")
                 break
             else:
                 lower_all = lower_new
                 upper_all = upper_new
-        ##print("done with recursive bound steps")
-        return
 
     def remove_from_play(self, subset):
         #
@@ -581,9 +542,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
         fd_up_mod = torch.clamp(fd_up, 0, fdlength)
         #
         inplay_prev = self.inplay[0:fdlength].to(torch.int64).sum(0)
-        ##print("previous in play count is",itp(inplay_prev))
-        ##print("removing",itp(subset.to(torch.int64).sum(0)),"locations from play")
-        #
         self.inplay[0:fdlength] = self.inplay[0:fdlength] & (~subset)
         #
         for i in range(100):
@@ -593,9 +551,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
             if self.inplay[0:fdlength].to(torch.int64).sum(0) == inplay_count:
                 break
         inplay_new = self.inplay[0:fdlength].to(torch.int64).sum(0)
-        ##print("new in play count is",itp(inplay_new))
-        #
-        return
 
     def random_remove_from_play(self, threshold):
         fdlength = self.FullData["length"]
@@ -635,12 +590,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
         #
         badlocations = (fd_lowerbound > fd_upperbound) & fd_inplay
         badlocations_count = badlocations.to(torch.int64).sum(0)
-        #
-        ##if badlocations_count > 0:
-        ##print("warning, we found",itp(badlocations_count),"bad locations")
-        ##else:
-        ##print("all locations are good")
-        #
         attained = (fd_lowerbound == fd_upperbound) & fd_inplay
         attained_count = attained.to(torch.int64).sum(0)
         #
@@ -652,27 +601,16 @@ class Minimizer:  # this becomes the first element of the relations datatype
         nonoptimal_count = nonoptimal.to(torch.int64).sum(0)
         #
         to_remove = nonoptimal | attained
-        #
-        ##print("found",itp(attained_count),"attained and",itp(nonoptimal_count),"nonoptimal locations that we remove from play (along with everything below)")
         self.remove_from_play(to_remove)
-        ##print("done pruning")
-        return
 
     def combo_init(self):
-        # print("------ initial combo segments ---------")
-        # print("------ manage next stage (two iterations)")
         self.manage_next_stage()
         self.manage_next_stage()
         print("------ make initial cut at", self.cutx, self.cuty, self.cutp)
         self.initial_cut(self.cutx, self.cuty, self.cutp)
-        # print("------ calculate current upper bound")
         self.calculate_current_upperbound()
-        # print("------ recursive bound")
         self.recursive_bound(100)
-        # print("------ prune")
         self.prune()
-        # print("------ done with initial combo segment ---------")
-        return
 
     def combo_step(self):
         # print("------ combo segment ---------")
@@ -741,14 +679,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
                                     #
                                     ub_next_xyp = self.upperbound[down_xyp]
                                     ub_next[x, y] += ub_next_xyp
-            #
-            ##print("lower bounds for the next cut locations x,y are as follows:")
-            ##print(nump(lb_next))
-            ##print("upper bounds")
-            ##print(nump(ub_next))
-            ##print("full data length was",itp(fdlength))
-            ##self.show_neural_network_results()
-            #
         return True
 
     def check_done_print(self):
@@ -882,14 +812,8 @@ class Minimizer:  # this becomes the first element of the relations datatype
     def combo_all(self):
         self.combo_init()
         for i in range(20):
-            ##print("===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===")
-            ##print("===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===")
             print(">>>>>>>>>>>>>>>>>>>>> combo step iteration number", i)
-            ##print("===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===")
-            ##print("===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===")
             step_result = self.combo_step()
             if step_result == "done":
                 break
-        ##print("===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===")
         print("combo all is completed.")
-        return

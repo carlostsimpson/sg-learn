@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-###### next: a class that can be used to search for specific examples, it was a debugging tool kept here for reference
+# next: a class that can be used to search for specific examples, it was a debugging tool kept here for reference
 import torch
 
 from constants import Dvc

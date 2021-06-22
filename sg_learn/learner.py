@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -681,7 +681,7 @@ class Learner:  # training the neural networks
         print("=================    end score training   =================")
         return
 
-    ######## Local stuff
+    # Local stuff
 
     def calculatescoresLocal(self, M, Data):
         #

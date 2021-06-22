@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -128,7 +128,7 @@ class SymmetricGroup:
         values, inversetable = torch.max(delta, 1)
         return inversetable
 
-    ##########@ for the list of subgroups ##########
+    # @ for the list of subgroups ##########
 
     def subgroupgen(
         self, thesubgroup, thex

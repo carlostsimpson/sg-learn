@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -101,7 +101,7 @@ class Relations1:
         )  # the size of the subset as a function of z
         #
 
-    ##### general manipulation of data
+    # general manipulation of data
 
     def printprod(self, Data, i):
         length = Data["length"]

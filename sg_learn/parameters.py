@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -152,9 +152,7 @@ class Parameters:  # records various parameters
         print("splitting probability", numpr(self.splitting_probability, 4))
         #
         self.outlier_threshold = 2.5
-        #
-        ##### learner parameters
-        #
+        # learner parameters
         self.explore_max = 30000
         self.examples_max = 5000
         self.new_examples_max = 300

@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -655,7 +655,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         #
         return
 
-    #### mini programs for creation of the instancevector_title object (it is really a pair)
+    # mini programs for creation of the instancevector_title object (it is really a pair)
 
     def InAll(self):
         instance_vector = arangeic(self.init_length)
@@ -814,7 +814,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
             self.HST.graph_history(self.Pp, "big")
         return
 
-    #### the following function automates the process of choosing a collection of instances to do
+    # the following function automates the process of choosing a collection of instances to do
 
     def instance_chooser(self):
         print(
