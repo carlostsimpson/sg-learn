@@ -120,7 +120,7 @@ class SGNetProcess(nn.Module):
 
     def forward(self, Data):
         #
-        initial_data, prod_data = self.prep(Data)
+        initial_data, _ = self.prep(Data)
         length = Data["length"]
         n = self.n
         #
@@ -145,6 +145,4 @@ class SGNetProcess(nn.Module):
         #
         yB = self.lrl(self.convB(torch.cat((yA1, yA3, yA5tg, yA7, yA9), 1)))
         #
-        yProcessed = yB.view(length, self.process_channels)
-        #
-        return yProcessed
+        return yB.view(length, self.process_channels)

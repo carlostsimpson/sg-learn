@@ -21,7 +21,7 @@ from constants import Dvc
 from historical import Historical
 from relations_4 import Relations4
 from symmetric_group import SymmetricGroup
-from utils import arangeic, itf, itp, numpr
+from utils import arangeic
 
 
 class Classifier:  # this is a very first part of classification up to isomorphism
@@ -167,7 +167,6 @@ class Classifier:  # this is a very first part of classification up to isomorphi
             if lower >= length:
                 break
         return invariant
-
 
     def to_eqfunction(self, length, eq, iz):
         #
@@ -320,7 +319,6 @@ class Classifier:  # this is a very first part of classification up to isomorphi
             lower = upper
             if lower >= length:
                 break
-
 
     def process(self, Data):
         #

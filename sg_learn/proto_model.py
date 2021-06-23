@@ -137,10 +137,5 @@ class ProtoModel:
         availablexyv = (prodsum > 1).view(length * a * a)
         #
         vsv = self.virtual_score(Data).reshape(length * a * a)
-        #
         vsv[~availablexyv] = 100.0
-        #
-        values, xyvector = torch.min(vsv.view(length, a * a), 1)
-        #
-        vs = vsv.view(length, a * a)
-        return vs
+        return vsv.view(length, a * a)

@@ -15,26 +15,25 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-# next: the class used to prove the theoretical minimum (this is for alpha,beta = 3,2)
-# note that the parameters and model should be initialized for (3,2)
-
-import gc
-
 import torch
 
 from constants import Dvc
 from driver import Driver
+from historical import Historical
 from relations_4 import Relations4
-from utils import CoherenceError, arangeic, itp, itt, nump, numpr
+from utils import CoherenceError, arangeic, itp, itt, nump
+
+# next: the class used to prove the theoretical minimum (this is for alpha,beta = 3,2)
+# note that the parameters and model should be initialized for (3,2)
 
 
 class Minimizer:  # this becomes the first element of the relations datatype
-    def __init__(self, model, sigma, cutx, cuty, cutp):
+    def __init__(self, model, sigma, cutx, cuty, cutp, HST: Historical):
         #
         #
         self.Mm = model
         self.Pp = self.Mm.pp
-        self.Dd = Driver(self.Pp)
+        self.Dd = Driver(self.Pp, HST)
         assert self.Pp.alpha == 3
         assert self.Pp.beta == 2
         #
@@ -42,7 +41,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
         #
         print("Minimizer for sigma =", sigma)
         #
-        self.rr4 = Relations4(self.Pp)
+        self.rr4 = Relations4(self.Pp, HST)
         self.rr3 = self.rr4.rr3
         self.rr2 = self.rr4.rr2
         self.rr1 = self.rr4.rr1
@@ -55,7 +54,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
         #
         self.length_max = 500000
         #
-        instancevector, trainingvector, proof_title = self.Dd.InOne(self.sigma)
+        instancevector, _, _ = self.Dd.InOne(self.sigma)
         self.InitialData = self.Dd.initialdata(instancevector, 0)
         #
         self.CurrentData = self.rr1.nulldata()
@@ -113,27 +112,15 @@ class Minimizer:  # this becomes the first element of the relations datatype
         self.combo_all()
 
     def next_stage_data(self, DataToSplit):
-        #
         a = self.alpha
         a2 = self.alpha2
-        a2z = self.alpha2 + 1
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
-        #
         length = DataToSplit["length"]
         prod = DataToSplit["prod"]
-        #
         availablexyp = self.rr1.availablexyp(length, prod).view(length, a2, bz)
-        #
-        avxyp_amount = availablexyp.to(torch.float).sum(2).sum(1).sum(0)
         avxyp_denom = itt(length).to(torch.float)
         if avxyp_denom < 0.1:
             avxyp_denom = 1.0
-        availablexyp_average = avxyp_amount / avxyp_denom
-        #
         lrangevxr = (
             arangeic(length)
             .view(length, 1, 1)
@@ -181,7 +168,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
         newdone = torch.zeros((ndlength), dtype=torch.bool, device=Dvc)
         newimpossible = torch.zeros((ndlength), dtype=torch.bool, device=Dvc)
         lower = 0
-        for i in range(ndlength):
+        for _ in range(ndlength):
             assert lower < ndlength
             upper = lower + 1000
             if upper > ndlength:
@@ -357,16 +344,13 @@ class Minimizer:  # this becomes the first element of the relations datatype
         Input = self.rr1.indexselectdata(self.FullData, fd_instances)
         #
         InitialActiveData = self.rr2.process(Input)
-        activedetect, donedetect, impossibledetect = self.rr2.filterdata(
-            InitialActiveData
-        )
+        activedetect, _, _ = self.rr2.filterdata(InitialActiveData)
         #
         ActivePool = self.rr1.detectsubdata(InitialActiveData, activedetect)
         #
         stepcount = 0
         for i in range(self.rr4.prooflooplength):
             stepcount += 1
-            prooflength = i
             if ActivePool["length"] > 0:
                 #
                 print(".", end="")
@@ -379,7 +363,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
                 ChunkData, cdetection = self.rr3.selectchunk(ActivePool)
                 #
                 #
-                ProofCurrentData, DoneData = self.rr3.managesplit(
+                ProofCurrentData, _ = self.rr3.managesplit(
                     Mstrat, ChunkData, False
                 )
                 #
@@ -395,8 +379,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
                     self.upperbound[fd_loc_list] = (
                         self.upperbound[fd_loc_list] + fd_loc_counts
                     )
-                gcc = gc.collect()
-                #
                 if ActivePool["length"] == 0:
                     break
                 if ActivePool["length"] > self.rr4.stopthreshold:
@@ -442,21 +424,11 @@ class Minimizer:  # this becomes the first element of the relations datatype
         #
         fd_lowerbound = self.lowerbound[0:fdlength]
         fd_upperbound = self.upperbound[0:fdlength]
-        #
-        fd_down = self.down[0:fdlength]
-        #
         fd_split = self.split[0:fdlength]
         fd_inplay = self.inplay[0:fdlength]
-        #
-        fd_current = fd_inplay & ~fd_split
         fd_lookat = fd_inplay & fd_split
         fd_uppable = fd_up >= 0
-        #
-        fd_availablexyp = self.availablexyp[0:fdlength]
         fd_availablexy = self.availablexy[0:fdlength]
-        #
-        # fd_impdone_xyp = (fd_down == -1)
-        #
         fd_lowerbound_xyp = torch.zeros(
             (fdlength, self.alpha, self.alpha, self.betaz),
             dtype=torch.int64,
@@ -505,10 +477,8 @@ class Minimizer:  # this becomes the first element of the relations datatype
         fd_upperbound_xy_rv = fd_upperbound_xy_r.view(
             fdlength, self.alpha * self.alpha
         )
-        #
-        fd_lowerbound_min, fdlbmindices = torch.min(fd_lowerbound_xy_rv, 1)
-        fd_upperbound_min, fdubmindices = torch.min(fd_upperbound_xy_rv, 1)
-        #
+        fd_lowerbound_min, _ = torch.min(fd_lowerbound_xy_rv, 1)
+        fd_upperbound_min, _ = torch.min(fd_upperbound_xy_rv, 1)
         fd_lowerbound_new = fd_lowerbound.clone()
         fd_upperbound_new = fd_upperbound.clone()
         fd_lowerbound_new[fd_lookat] = fd_lowerbound_min[fd_lookat]
@@ -523,7 +493,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
         #
         lower_all = self.lowerbound[0:fdlength].sum(0)
         upper_all = self.upperbound[0:fdlength].sum(0)
-        for i in range(iterations):
+        for _ in range(iterations):
             self.recursive_bound_step()
             lower_new = self.lowerbound[0:fdlength].sum(0)
             upper_new = self.upperbound[0:fdlength].sum(0)
@@ -534,23 +504,16 @@ class Minimizer:  # this becomes the first element of the relations datatype
                 upper_all = upper_new
 
     def remove_from_play(self, subset):
-        #
-        #
         fdlength = self.FullData["length"]
-        #
         fd_up = self.up[0:fdlength]
         fd_up_mod = torch.clamp(fd_up, 0, fdlength)
-        #
-        inplay_prev = self.inplay[0:fdlength].to(torch.int64).sum(0)
         self.inplay[0:fdlength] = self.inplay[0:fdlength] & (~subset)
-        #
-        for i in range(100):
+        for _ in range(100):
             inplay_count = self.inplay[0:fdlength].to(torch.int64).sum(0)
             inplay_up = self.inplay[fd_up_mod]
             self.inplay[0:fdlength] = self.inplay[0:fdlength] & inplay_up
             if self.inplay[0:fdlength].to(torch.int64).sum(0) == inplay_count:
                 break
-        inplay_new = self.inplay[0:fdlength].to(torch.int64).sum(0)
 
     def initial_cut(self, x, y, p):
         fdlength = self.FullData["length"]
@@ -568,19 +531,11 @@ class Minimizer:  # this becomes the first element of the relations datatype
         fd_lowerbound = self.lowerbound[0:fdlength]
         fd_upperbound = self.upperbound[0:fdlength]
         fd_inplay = self.inplay[0:fdlength]
-        #
-        badlocations = (fd_lowerbound > fd_upperbound) & fd_inplay
-        badlocations_count = badlocations.to(torch.int64).sum(0)
         attained = (fd_lowerbound == fd_upperbound) & fd_inplay
-        attained_count = attained.to(torch.int64).sum(0)
-        #
         up_mod = torch.clamp(self.up[0:fdlength], 0, fdlength)
-        #
         upperbound_up = self.upperbound[up_mod]
         nonoptimal = (fd_lowerbound + 1) >= upperbound_up
         nonoptimal[0] = False
-        nonoptimal_count = nonoptimal.to(torch.int64).sum(0)
-        #
         to_remove = nonoptimal | attained
         self.remove_from_play(to_remove)
 
@@ -612,11 +567,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
 
     def check_done(self):
         fdlength = self.FullData["length"]
-        #
-        fd_lowerbound = self.lowerbound[0:fdlength]
-        fd_upperbound = self.upperbound[0:fdlength]
         fd_inplay = self.inplay[0:fdlength]
-        #
         inplay_count = fd_inplay.to(torch.int64).sum(0)
         if inplay_count > 1:
             return False
@@ -664,11 +615,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
 
     def check_done_print(self):
         fdlength = self.FullData["length"]
-        #
-        fd_lowerbound = self.lowerbound[0:fdlength]
-        fd_upperbound = self.upperbound[0:fdlength]
         fd_inplay = self.inplay[0:fdlength]
-        #
         inplay_count = fd_inplay.to(torch.int64).sum(0)
         if inplay_count > 1:
             print("not done: there are remaining locations in play")

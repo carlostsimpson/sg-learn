@@ -52,7 +52,7 @@ Fws.tracer_root(5)
 
 Fws.tracer_subroot(5, 0, 0, 0)
 
-Fws.show_cut_column(5, 2, 1)
+Fws.show_cut_column(5)
 
 Fws.print_one_sample_from_box(0.25, 0.35, 0.0, 0.2)
 

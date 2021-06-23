@@ -117,7 +117,6 @@ class Relations1:
             printarray += (10 ** p) * (prod[i, :, :, p].to(torch.int))
         print(nump(printarray))
 
-
     def makebetazsubsets(self):
         b = self.beta
         bz = self.betaz
@@ -231,12 +230,7 @@ class Relations1:
 
     def knowledge(self, Data):  # now it increases as we refine
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
         bz = self.betaz
-        #
-        #
         length = Data["length"]
         prod = Data["prod"]  # mask of shape a.a.bz with boolean values
         left = Data["left"]
@@ -255,14 +249,7 @@ class Relations1:
         return output
 
     def availablexy(self, length, prod):
-        #
-        a = self.alpha
         a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
-        #
         prodsum = prod.to(torch.int64).sum(3)
         possible = ((prodsum > 0).all(2)).all(1)
         possiblexy = possible.view(length, 1).expand(length, a2)
@@ -273,14 +260,8 @@ class Relations1:
         return available_xy
 
     def availablexyp(self, length, prod):
-        #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
         prodsum = prod.to(torch.int64).sum(3)
         possible = ((prodsum > 0).all(2)).all(1)
         possiblexyp = possible.view(length, 1, 1, 1).expand(length, a, a, bz)
@@ -297,17 +278,10 @@ class Relations1:
     def upsplitting(
         self, Data, ivector, xvector, yvector, pvector
     ):  # setting x.y = p
-        #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
         if len(ivector) == 0:
             return self.rr1.nulldata()
-        #
         UpData = self.indexselectdata(Data, ivector)
         length = UpData["length"]
         prod = UpData["prod"]

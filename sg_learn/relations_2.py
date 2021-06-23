@@ -40,25 +40,16 @@ class Relations2:
         self.halfones_count = 0
         self.impossible_basic_count = 0
 
-
     # new steps with prod, left, right, ternary
 
     def modifyternaryStep(self, Data):
-        #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
         length = Data["length"]
         prod = Data["prod"]
         left = Data["left"]
         right = Data["right"]
         ternary = Data["ternary"]
-        #
-        #
         ivx = (
             arangeic(length)
             .view(length, 1, 1, 1, 1)
@@ -92,14 +83,8 @@ class Relations2:
         return NewData
 
     def modifyleftrightStep(self, Data):
-        #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
         length = Data["length"]
         prod = Data["prod"]
         left = Data["left"]
@@ -164,14 +149,8 @@ class Relations2:
         return NewData
 
     def modifyprodStep(self, Data):
-        #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
         length = Data["length"]
         prod = Data["prod"]
         left = Data["left"]
@@ -216,10 +195,8 @@ class Relations2:
         NextData = self.rr1.detectsubdata(Data, subset)
         if subset.to(torch.int).sum(0) == 0:
             return OutputData
-        for i in range(1000):
+        for _ in range(1000):
             priorknowledge = self.rr1.knowledge(NextData)
-            #
-            #
             NextData = self.modifyternaryStep(NextData)
             #
             NextData = self.modifyleftrightStep(NextData)
@@ -242,12 +219,8 @@ class Relations2:
 
     def impossibleFilter(self, Data):
         a = self.alpha
-        a2 = self.alpha2
         a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
         length = Data["length"]
         prod = Data["prod"]
         left = Data["left"]
@@ -274,18 +247,10 @@ class Relations2:
 
     def profileFilter(self, Data):
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
         length = Data["length"]
-        prod = Data["prod"]
         left = Data["left"]
         right = Data["right"]
-        ternary = Data["ternary"]
-        #
         left_def = (left.to(torch.int64).sum(3)) == 1
         right_def = (right.to(torch.int64).sum(3)) == 1
         profile_def = (left_def.all(1)) & (right_def.all(2))
@@ -312,24 +277,12 @@ class Relations2:
         return detection
 
     def doneFilter(self, Data):
-        a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
-        #
-        length = Data["length"]
         prod = Data["prod"]
-        ternary = Data["ternary"]
-        #
         prodstats = prod.to(torch.int64).sum(3)
-        binsum = ternary.view(length, a3, 2).to(torch.int64).sum(2)
         return ((prodstats == 1).all(2)).all(1)
 
     def halfonesFilter(self, Data):  # only look at cases where the number of
         # ones on the left is >= the number on the right
-        prod = Data["prod"]
         left = Data["left"]
         right = Data["right"]
         leftstats = left.to(torch.int64).sum(3)

@@ -54,7 +54,7 @@ class Relations3:
             print(nump(multiplicities))
             return
         #
-        dmax, dindices = torch.max(depth, 0)
+        dmax, _ = torch.max(depth, 0)
         if dmax + 2 > dlength:
             dlength = dmax + 2
         if dlength > 50:
@@ -71,20 +71,15 @@ class Relations3:
         return
 
     def selectchunk(self, Data):
-        #
         length = Data["length"]
         depth = Data["depth"]
         prod = Data["prod"]
-        #
-        #
         assert length > 0
-        #
         prodstats = prod.to(torch.int).sum(3)
         assert (((prodstats > 0).all(2)).all(1)).all(0)
         optional = prodstats > 1
         assert ((optional.any(2)).any(1)).all(0)
-        #
-        values, indices = torch.sort(depth, 0, descending=True)
+        _, indices = torch.sort(depth, 0, descending=True)
         upper = length
         if upper > self.pp.chunksize:
             upper = self.pp.chunksize
@@ -101,33 +96,16 @@ class Relations3:
         return ChunkData, cdetection
 
     def network_vcuts(self, M, Data, randomize):
-        a = self.alpha
         a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
-        #
         length = Data["length"]
-        depth = Data["depth"]
         prod = Data["prod"]
-        #
         assert length > 0
-        #
-        #
         prodstats = prod.to(torch.int64).sum(3)
-        #
         assert (((prodstats > 0).all(2)).all(1)).all(0)
-        #
-        #
         availablexyr = self.rr1.availablexy(length, prod).reshape(length * a2)
-        #
         networkscorer = M.network2(Data).detach().reshape(length * a2)
-        #
         if randomize:
-            #
             epsilon_tirage = torch.rand(length * a2, device=Dvc)
-            alll = torch.clamp(M.average_local_loss, 0.0, 0.5)
             epsilon_factor = (
                 M.average_local_loss
                 * self.pp.perturbation_factor
@@ -151,24 +129,14 @@ class Relations3:
         networkscorer = torch.clamp(networkscorer, -1.0, 10.0)
         networkscorer[~availablexyr] = 20.0
         networkscore = networkscorer.view(length, a2)
-        #
-        values, xyvector = torch.min(networkscore, 1)
-        #
-        return xyvector
+        return torch.min(networkscore, 1)[1]
 
     def addvalencies(
         self, availablexyp, xyvector
     ):  # adds into the HST file the valencies of these vertices
         # also adds the passive count (just the length of the xyvector)
-        #
-        a = self.alpha
         a2 = self.alpha2
-        a2z = self.alpha2 + 1
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
         length = len(xyvector)
         self.HST.current_proof_passive_count += length
         #
@@ -183,16 +151,9 @@ class Relations3:
         return
 
     def managesplit(self, M, DataToSplit, randomize):
-        #
         a = self.alpha
         a2 = self.alpha2
-        a2z = self.alpha2 + 1
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
-        #
         length = DataToSplit["length"]
         prod = DataToSplit["prod"]
         #
@@ -242,7 +203,7 @@ class Relations3:
         newdone = torch.zeros((ndlength), dtype=torch.bool, device=Dvc)
         newimpossible = torch.zeros((ndlength), dtype=torch.bool, device=Dvc)
         lower = 0
-        for i in range(ndlength):
+        for _ in range(ndlength):
             assert lower < ndlength
             upper = lower + 1000
             if upper > ndlength:

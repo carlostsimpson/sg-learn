@@ -35,11 +35,8 @@ class PrepareInputLayer(nn.Module):
         #
 
     def forward(self, Data):
-        #
         a = self.a
-        b = self.b
         bz = self.bz
-        #
         length = Data["length"]
         prod = Data["prod"]
         left = Data["left"]

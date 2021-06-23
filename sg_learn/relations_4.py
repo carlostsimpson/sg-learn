@@ -15,8 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-import gc
-
 import torch
 
 from constants import Dvc
@@ -71,19 +69,8 @@ class Relations4:
         return
 
     def printexamples(self, Data):
-        #
-        a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
-        #
         length = Data["length"]
-        depth = Data["depth"]
-        prod = Data["prod"]
         ternary = Data["ternary"]
-        #
         if length == 0:
             print("length 0, no examples to print")
             return
@@ -113,7 +100,7 @@ class Relations4:
         #
         return NextActivePoolCopy
 
-    def transitiondone(self, C, DonePool, DoneData, aplength):
+    def transitiondone(self, C, DonePool, DoneData):
         #
         idl = DoneData["length"]
         #
@@ -213,7 +200,7 @@ class Relations4:
             )
         #
         if dropoutlimit > 0:
-            ActivePool, DroppedPool, newsum, droppedsum = self.dropoutdata(
+            ActivePool, DroppedPool, _, droppedsum = self.dropoutdata(
                 Mlearn, ActivePool, dropoutlimit
             )
             if self.pp.dropout_style == "adaptive":
@@ -284,7 +271,7 @@ class Relations4:
                     (
                         ActivePool,
                         DroppedPool,
-                        newsum,
+                        _,
                         droppedsum,
                     ) = self.dropoutdata(Mlearn, ActivePool, dropoutlimit)
                     #
@@ -328,11 +315,7 @@ class Relations4:
                         itp(ActivePool["length"]),
                         end=" ",
                     )
-                DonePool = self.transitiondone(
-                    C, DonePool, DoneData, ActivePool["length"]
-                )
-                #
-                gcc = gc.collect()
+                DonePool = self.transitiondone(C, DonePool, DoneData)
                 if self.pp.verbose:
                     memReport("mg")
                     #
@@ -456,7 +439,7 @@ class Relations4:
         lrange = arangeic(length)
         #
         lower = 0
-        for i in range(length):
+        for _ in range(length):
             upper = lower + 1000
             if upper > length:
                 upper = length
@@ -507,7 +490,7 @@ class Relations4:
         #
         extent = self.extent_sliced(M, Data)
         #
-        values, sort_indices = torch.sort(extent, 0)
+        _, sort_indices = torch.sort(extent, 0)
         fraction = itf(length) / itf(dropoutlimit)
         epsilon_multiplier = itf(length - dropoutlimit) / itf(length)
         epsilon_multiplier = torch.clamp(epsilon_multiplier, 0.0, 1.0)

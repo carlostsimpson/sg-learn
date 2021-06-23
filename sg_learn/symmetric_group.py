@@ -55,7 +55,6 @@ class SymmetricGroup:
         krange = torch.arange(
             (k), dtype=torch.int64, device=Dvc
         )  # same as arangeic(k)
-        krangevx = krange.view(k, 1).expand(k, length_prev)
         krangevx2 = krange.view(k, 1, 1).expand(k, length_prev, k - 1)
         #
         sgtprev_vx = sgtprev.view(1, length_prev, k - 1).expand(
@@ -85,9 +84,7 @@ class SymmetricGroup:
         tablevx = self.grouptable.view(gl, p, 1).expand(gl, p, p)
         yrangevx = arangeic(p).view(1, 1, p).expand(gl, p, p)
         delta = (tablevx == yrangevx).to(torch.int64)
-        values, inversetable = torch.max(delta, 1)
-        return inversetable
-
+        return torch.max(delta, 1)[1]
 
     def makegrouptablebinary(self):
         p = self.p

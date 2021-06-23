@@ -15,8 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-import gc
-
 import torch
 
 from classifier import Classifier
@@ -73,13 +71,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
     def printprod(self, prod, loc):
         #
         a = self.alpha
-        a2 = a * a
-        a3 = a * a * a
-        a3z = a3 + 1
-        b = self.beta
-        bz = b + 1
-        #
-        prodi = prod[loc]
         prarray = torch.zeros((a, a), dtype=torch.int64, device=Dvc)
         for x in range(a):
             for y in range(a):
@@ -89,11 +80,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         return
 
     def printcolumn(self, column):
-        #
-        a = self.alpha
-        a2 = a * a
-        a3 = a * a * a
-        a3z = a3 + 1
         b = self.beta
         bz = b + 1
         #
@@ -105,7 +91,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
             return -8
         #
         if column_sum == 1:
-            value, prvalue = torch.max(column.to(torch.int64), 0)
+            _, prvalue = torch.max(column.to(torch.int64), 0)
             return prvalue
         if column_sum == bz:
             return -1
@@ -131,9 +117,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
     def printleft(self, left, loc):
         #
         a = self.alpha
-        a2 = a * a
-        a3 = a * a * a
-        a3z = a3 + 1
         b = self.beta
         bz = b + 1
         #
@@ -148,9 +131,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
     def printright(self, right, loc):
         #
         a = self.alpha
-        a2 = a * a
-        a3 = a * a * a
-        a3z = a3 + 1
         b = self.beta
         bz = b + 1
         #
@@ -208,11 +188,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
     ):  # this doesn't work perfectly, it needs to be re-sieved afterwards
         #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
         #
         power = 2 ** a
         gl = self.sga.gtlength
@@ -316,7 +291,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         grange_vx = arangeic(gl).view(1, gl, 1).expand(clength, gl, m)
         collec_vx = collec.view(clength, 1, m).expand(clength, gl, m)
         transform = gtbin[grange_vx, collec_vx]
-        transform_sort, t_indices = torch.sort(transform, 2)
+        transform_sort, _ = torch.sort(transform, 2)
         #
         subgroup = (collec_vx == transform_sort).all(2)
         #
@@ -358,22 +333,11 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         return lt
 
     def collection_sieve(self):
-        #
-        a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
         b = self.beta
-        bz = self.betaz
-        #
-        power = 2 ** a
         gl = self.sga.gtlength
-        #
         gtbin = self.sga.gtbinary
         #
-        clength, collec, collec_bin, possibilities, subgroup = self.collection(
-            b
-        )
+        clength, collec, collec_bin, _, _ = self.collection(b)
         #
         collecvxr = (
             collec.view(clength, 1, b)
@@ -388,7 +352,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         )
         #
         transform = gtbin[grangevxr, collecvxr]
-        transform_sort, t_indices = torch.sort(transform, 1)
+        transform_sort, _ = torch.sort(transform, 1)
         #
         transform_ltv = self.lex_lt(b, transform_sort, collecvxr)
         transform_lt = transform_ltv.view(clength, gl)
@@ -403,17 +367,12 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         return sieved_length, sieved_collection, sieved_collection_bin
 
     def make_init_left_table(self):
-        #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
         b = self.beta
         bz = self.betaz
-        #
         (
             length,
-            sieved_collection,
+            _,
             sieved_collection_bin,
         ) = self.collection_sieve()
         #
@@ -450,9 +409,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
     def initialdata(self, instancevector, dropoutlimit):
         #
         a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
         b = self.beta
         bz = self.betaz
         #
@@ -520,7 +476,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         #
         (
             instancevector,
-            training_instances,
+            _,
             proof_title,
         ) = self.instance_chooser()
         InitialData = self.initialdata(instancevector, 0)
@@ -559,9 +515,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         #
         if dropoutlimit > 0:
             AssocInitialData = self.rr2.process(InitialData)
-            activedetect, donedetect, impossibledetect = self.rr2.filterdata(
-                AssocInitialData
-            )
+            activedetect, _, _ = self.rr2.filterdata(AssocInitialData)
             ActiveInitialData = self.rr1.detectsubdata(
                 AssocInitialData, activedetect
             )
@@ -571,7 +525,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
                 explore_upper = dropoutlimit
             self.Ll.prepoolExplore(Mlearn, ActiveInitialData, explore_upper)
         #
-        pl, ActivePool, DonePool, prooflength = self.rr4.proofloop(
+        _, ActivePool, _, prooflength = self.rr4.proofloop(
             Mstrat, Mlearn, self.Cc, InitialData, dropoutlimit
         )
         #
@@ -614,7 +568,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
     def InAll(self):
         instance_vector = arangeic(self.init_length)
         #
-        title_text = f"for all sigma instances"
+        title_text = "for all sigma instances"
         #
         return instance_vector, instance_vector, title_text
 
@@ -692,7 +646,7 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
                 Mstrat, Mlearn, dropout2, training_instances, title_text
             )
             self.Ll.prepoolSamples(
-                Mlearn, self.rr4.SamplePool, self.Ll.new_examples_max
+                self.rr4.SamplePool, self.Ll.new_examples_max
             )
             #
             self.Ll.scoreExamples(Mlearn)
@@ -703,14 +657,14 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
                 Mstrat, Mlearn, dropout2, training_instances, title_text
             )
             self.Ll.prepoolSamples(
-                Mlearn, self.rr4.SamplePool, self.Ll.new_examples_max
+                self.rr4.SamplePool, self.Ll.new_examples_max
             )
             self.classificationproof(
                 Mstrat, Mlearn, 100, training_instances, title_text
             )
             self.Ll.addscoredexamples(Mlearn)
             self.Ll.prepoolSamples(
-                Mlearn, self.rr4.SamplePool, self.Ll.new_examples_max
+                self.rr4.SamplePool, self.Ll.new_examples_max
             )
             #
             self.Ll.scoreExamples(Mlearn)
@@ -738,7 +692,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
             print(
                 "======      ======      ======      ======      ======      ======"
             )
-            gcc = gc.collect()
             memReport("mg")
             print(
                 "======      ======      ======      ======      ======      ======"

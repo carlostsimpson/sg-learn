@@ -65,16 +65,13 @@ class Learner:  # training the neural networks
         self.globalL1level = 1.0
 
     def pruneExamples(
-        self, M
+        self,
     ):  # remove the last ones, those were the earliest added
-        #
         elength = self.Examples["length"]
         epplength = self.ExamplesPrePool["length"]
         xlength = self.ExplorePrePool["length"]
         olength = self.OutlierPrePool["length"]
-        #
         if elength > self.examples_max:
-            # self.specialPruneExamples(M)
             permutation = torch.randperm(elength, device=Dvc)
             indices = permutation[0 : self.examples_max]
             self.Examples = self.rr1.indexselectdata(self.Examples, indices)
@@ -98,7 +95,6 @@ class Learner:  # training the neural networks
             self.OutlierPrePool = self.rr1.indexselectdata(
                 self.OutlierPrePool, indices
             )
-        return
 
     def check_availability(self, Data, comment):
         #
@@ -113,7 +109,7 @@ class Learner:  # training the neural networks
         return
 
     def prepoolSamples(
-        self, M, Data, new_examples
+        self, Data, new_examples
     ):  # prepend new ones so that the earliest ones were the last ones
         #
         #
@@ -131,9 +127,7 @@ class Learner:  # training the neural networks
         self.ExamplesPrePool = self.rr1.appenddata(
             NewExamples, self.ExamplesPrePool
         )
-        #
-        self.pruneExamples(M)
-        return
+        self.pruneExamples()
 
     def prepoolExplore(
         self, M, Data, new_examples
@@ -162,9 +156,7 @@ class Learner:  # training the neural networks
         self.ExplorePrePool = self.rr1.appenddata(
             NewExamples, self.ExplorePrePool
         )
-        #
-        self.pruneExamples(M)
-        return
+        self.pruneExamples()
 
     def transferexamples(
         self, M, TransferData, extent, localscore, epp_throw_detection
@@ -189,9 +181,7 @@ class Learner:  # training the neural networks
         self.OutlierPrePool = self.rr1.appenddata(
             NewOutliers, self.OutlierPrePool
         )
-        #
-        self.pruneExamples(M)
-        return
+        self.pruneExamples()
 
     def scoreExamples(self, M):
         epplength = self.ExamplesPrePool["length"]

@@ -32,6 +32,7 @@ class MinimizerHistory:  # this becomes the first element of the relations datat
         self.Mm = model
         self.Pp = self.Mm.pp
         self.Dd = Driver(self.Pp, HST)
+        self.HST = HST
         #
         sigma = int(input("input sigma : "))
         self.sigma = sigma
@@ -56,7 +57,7 @@ class MinimizerHistory:  # this becomes the first element of the relations datat
         self.beta = self.Pp.beta
         self.betaz = self.Pp.betaz
         #
-        instancevector, trainingvector, proof_title = self.Dd.InOne(self.sigma)
+        instancevector, _, _ = self.Dd.InOne(self.sigma)
         self.InitialData = self.Dd.initialdata(instancevector, 0)
         #
         self.results = torch.zeros(
@@ -118,7 +119,7 @@ class MinimizerHistory:  # this becomes the first element of the relations datat
             for y in range(self.alpha):
                 for p in range(self.betaz):
                     if self.availablexyp[x, y, p]:
-                        Min = Minimizer(self.Mm, self.sigma, x, y, p)
+                        Min = Minimizer(self.Mm, self.sigma, x, y, p, self.HST)
                         cut_instance = Min.down[0, x, y, p]
                         assert (
                             Min.lowerbound[cut_instance]

@@ -92,7 +92,7 @@ def memReport(style):  # by QuantScientist Solomon K @smth
             "elements",
         )
         #
-        values, indices = torch.sort(elements, descending=True)
+        _, indices = torch.sort(elements, descending=True)
         upper = 5
         if upper > count:
             upper = count

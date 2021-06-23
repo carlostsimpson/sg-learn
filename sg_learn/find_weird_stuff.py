@@ -64,9 +64,6 @@ class FindWeirdStuff:
     def printright(self, right, loc):
         #
         a = self.alpha
-        a2 = a * a
-        a3 = a * a * a
-        a3z = a3 + 1
         b = self.beta
         bz = b + 1
         #
@@ -100,7 +97,7 @@ class FindWeirdStuff:
             toprint += column[q].to(torch.int64) * (10 ** q)
         return toprint
 
-    def print_bool_tensor(self, a, b, c, btensor):
+    def print_bool_tensor(self, a, b, btensor):
         prarray = torch.zeros((a, b), dtype=torch.int64, device=Dvc)
         for x in range(a):
             for y in range(b):
@@ -142,11 +139,6 @@ class FindWeirdStuff:
 
     def av_root(self, DataToSplit, i):
         a = self.alpha
-        a2 = self.alpha2
-        a2z = self.alpha2 + 1
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
         #
         #
@@ -158,17 +150,10 @@ class FindWeirdStuff:
         )[i]
         #
         print("at root, availablexyp is:")
-        self.print_bool_tensor(a, a, bz, availablexypi)
-        #
-        return
+        self.print_bool_tensor(a, a, availablexypi)
 
     def split_by_hand(self, DataToSplit, i, x, y, p):
         a = self.alpha
-        a2 = self.alpha2
-        a2z = self.alpha2 + 1
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
         #
         #
@@ -220,26 +205,17 @@ class FindWeirdStuff:
             1, a, a, bz
         )[0]
         print("after cut at", itp(x), itp(y), itp(p), "availablexyp is:")
-        self.print_bool_tensor(a, a, bz, AND_availablexyp)
+        self.print_bool_tensor(a, a, AND_availablexyp)
         print("prod is")
-        self.print_bool_tensor(a, a, bz, AND_prod[0])
-        #
-        #
+        self.print_bool_tensor(a, a, AND_prod[0])
         return AND_prod
 
     def show_cut_column(
-        self, sigma, x, y
+        self, sigma
     ):  # shows the results of (x,y,p) cut starting from root, for all p
-        #
-        instancevector, trainingvector, title_text = self.Dd.InOne(sigma)
+        instancevector, _, _ = self.Dd.InOne(sigma)
         InitialData = self.Dd.initialdata(instancevector, 0)
-        #
         self.av_root(InitialData, 0)
-        #
-        for p in range(self.betaz):
-            #
-            andprod = self.split_by_hand(InitialData, 0, x, y, p)
-        return
 
     def searchprod(self, Data, trprod):
         #
@@ -267,20 +243,16 @@ class FindWeirdStuff:
     def tracer(self, trprod):
         #
         print("Examples:", end=" ")
-        dl, di = self.searchprod(self.Ll.Examples, trprod)
         print("ExamplesPrePool:", end=" ")
-        dl, di = self.searchprod(self.Ll.ExamplesPrePool, trprod)
+        self.searchprod(self.Ll.ExamplesPrePool, trprod)
         print("ExplorePrePool:", end=" ")
-        dl, di = self.searchprod(self.Ll.ExplorePrePool, trprod)
+        self.searchprod(self.Ll.ExplorePrePool, trprod)
         print("OutlierPrePool:", end=" ")
-        dl, di = self.searchprod(self.Ll.OutlierPrePool, trprod)
-        #
-        #
-        return
+        self.searchprod(self.Ll.OutlierPrePool, trprod)
 
     def tracer_root(self, sigma):
         #
-        instancevector, trainingvector, title_text = self.Dd.InOne(sigma)
+        instancevector, _, _ = self.Dd.InOne(sigma)
         InitialData = self.Dd.initialdata(instancevector, 0)
         #
         trprod = InitialData["prod"][0]
@@ -291,7 +263,7 @@ class FindWeirdStuff:
 
     def tracer_subroot(self, sigma, x, y, p):
         #
-        instancevector, trainingvector, title_text = self.Dd.InOne(sigma)
+        instancevector, _, _ = self.Dd.InOne(sigma)
         InitialData = self.Dd.initialdata(instancevector, 0)
         #
         trprod = self.split_by_hand(InitialData, 0, x, y, p)
