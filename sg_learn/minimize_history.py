@@ -27,16 +27,12 @@ from utils import itp, nump
 
 class MinimizerHistory:  # this becomes the first element of the relations datatype
     def __init__(self, model, HST: Historical):
-        #
-        #
         self.Mm = model
         self.Pp = self.Mm.pp
         self.Dd = Driver(self.Pp, HST)
         self.HST = HST
-        #
         sigma = int(input("input sigma : "))
         self.sigma = sigma
-        #
         print("Minimizer History for sigma =", sigma)
         print(
             "with profile_filter_on =",
@@ -45,7 +41,6 @@ class MinimizerHistory:  # this becomes the first element of the relations datat
             self.Pp.halfones_filter_on,
         )
 
-        #
         self.rr4 = Relations4(self.Pp, HST)
         self.rr3 = self.rr4.rr3
         self.rr2 = self.rr4.rr2
@@ -56,23 +51,17 @@ class MinimizerHistory:  # this becomes the first element of the relations datat
         self.alpha3z = self.Pp.alpha3z
         self.beta = self.Pp.beta
         self.betaz = self.Pp.betaz
-        #
         instancevector, _, _ = self.Dd.InOne(self.sigma)
         self.InitialData = self.Dd.initialdata(instancevector, 0)
-        #
         self.results = torch.zeros(
             (self.alpha, self.alpha, self.betaz), dtype=torch.int64, device=Dvc
         )
-        #
         idlength = self.InitialData["length"]
         idprod = self.InitialData["prod"]
         self.availablexyp = self.rr1.availablexyp(idlength, idprod)[0]
-        #
 
     def print_results(self):
-        #
         results_sum = self.results.sum(2)
-        #
         minimal = results_sum[0, 0]
         for x in range(self.alpha):
             for y in range(self.alpha):
@@ -95,7 +84,6 @@ class MinimizerHistory:  # this becomes the first element of the relations datat
         print(
             "=+=   =+=   =+=   =+=   =+=   =+=   =+=   =+=   =+=   =+=   =+=   =+="
         )
-        #
         print("summed results according to initial cut location are:")
         print(nump(results_sum))
         print(
@@ -113,7 +101,6 @@ class MinimizerHistory:  # this becomes the first element of the relations datat
         )
 
     def minimize_all(self):
-        #
         for x in range(self.alpha):
             for y in range(self.alpha):
                 for p in range(self.betaz):

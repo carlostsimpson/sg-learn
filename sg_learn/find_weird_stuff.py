@@ -24,14 +24,10 @@ from utils import arangeic, itp, nump
 
 class FindWeirdStuff:
     def __init__(self, Dd, Mm):
-        #
-        #
         self.Dd = Dd
         self.Ll = self.Dd.Ll
         self.Mm = Mm
-        #
         self.Pp = self.Dd.Pp
-        #
         self.rr4 = self.Dd.rr4
         self.rr3 = self.rr4.rr3
         self.rr2 = self.rr4.rr2
@@ -42,31 +38,23 @@ class FindWeirdStuff:
         self.alpha3z = self.Pp.alpha3z
         self.beta = self.Pp.beta
         self.betaz = self.Pp.betaz
-        #
 
     def sample_box(self, xlower, xupper, ylower, yupper):
-        #
         smb, DataBatch, scorebatch = self.Ll.selectminibatch(500)
-        #
         if not smb:
             print("select mini batch fails")
             return False, None
         predictedscore = self.Mm.network(DataBatch)
-        #
         detectionx = (xlower < scorebatch) & (scorebatch < xupper)
         detectiony = (ylower < predictedscore) & (predictedscore < yupper)
         detection = detectionx & detectiony
-        #
         DetectedData = self.rr1.detectsubdata(DataBatch, detection)
-        #
         return True, DetectedData
 
     def printright(self, right, loc):
-        #
         a = self.alpha
         b = self.beta
         bz = b + 1
-        #
         prarray = torch.zeros((bz, a), dtype=torch.int64, device=Dvc)
         for x in range(bz):
             for y in range(a):
@@ -78,7 +66,6 @@ class FindWeirdStuff:
         prod = Data["prod"]
         left = Data["left"]
         right = Data["right"]
-        #
         print("---------------------------------------------------")
         print(
             "at location", itp(i), "the prod, left and right are respectively"
@@ -104,9 +91,7 @@ class FindWeirdStuff:
         print(nump(prarray))
 
     def print_one_sample_from_box(self, xlower, xupper, ylower, yupper):
-        #
         sb, DetectedData = self.sample_box(xlower, xupper, ylower, yupper)
-        #
         if not sb:
             print("exit from one sample box")
             return
@@ -114,7 +99,6 @@ class FindWeirdStuff:
         if length == 0:
             print("didn't detect any samples in this box")
             return
-        #
         AssocData = self.rr2.process(DetectedData)
         activedetect, donedetect, impossibledetect = self.rr2.filterdata(
             AssocData
@@ -136,37 +120,28 @@ class FindWeirdStuff:
     def av_root(self, DataToSplit, i):
         a = self.alpha
         bz = self.betaz
-        #
-        #
         length = DataToSplit["length"]
         prod = DataToSplit["prod"]
-        #
         availablexypi = self.rr1.availablexyp(length, prod).view(
             length, a, a, bz
         )[i]
-        #
         print("at root, availablexyp is:")
         self.print_bool_tensor(a, a, availablexypi)
 
     def split_by_hand(self, DataToSplit, i, x, y, p):
         a = self.alpha
         bz = self.betaz
-        #
-        #
         length = DataToSplit["length"]
         prod = DataToSplit["prod"]
-        #
         availablexypi = self.rr1.availablexyp(length, prod).view(
             length, a, a, bz
         )[i]
-        #
         available_instance = availablexypi[x, y, p]
         if available_instance:
             print("this instance", itp(x), itp(y), itp(p), "is available")
         else:
             print("this instance", itp(x), itp(y), itp(p), "is not available")
             return
-        #
         ivector = torch.zeros((1), dtype=torch.int64, device=Dvc)
         ivector[:] = i
         xvector = torch.zeros((1), dtype=torch.int64, device=Dvc)
@@ -175,18 +150,12 @@ class FindWeirdStuff:
         yvector[:] = y
         pvector = torch.zeros((1), dtype=torch.int64, device=Dvc)
         pvector[:] = p
-        #
-        #
         NewData = self.rr1.upsplitting(
             DataToSplit, ivector, xvector, yvector, pvector
         )
-        #
-        #
         ndlength = NewData["length"]
         assert ndlength == 1
-        #
         AssocNewData = self.rr2.process(NewData)
-        #
         newactive, newdone, newimpossible = self.rr2.filterdata(AssocNewData)
         if newactive[0]:
             print("active")
@@ -194,7 +163,6 @@ class FindWeirdStuff:
             print("done")
         if newimpossible[0]:
             print("impossible")
-        #
         AND_prod = AssocNewData["prod"]
         AND_length = 1
         AND_availablexyp = self.rr1.availablexyp(AND_length, AND_prod).view(
@@ -214,21 +182,16 @@ class FindWeirdStuff:
         self.av_root(InitialData, 0)
 
     def searchprod(self, Data, trprod):
-        #
         a = self.alpha
         bz = self.betaz
-        #
         length = Data["length"]
         prod = Data["prod"]
-        #
         if length == 0:
             print("length is 0")
             return 0, None
         prodv = prod.view(length, a * a * bz)
         trprodv = trprod.view(1, a * a * bz).expand(length, a * a * bz)
-        #
         detection = (prodv == trprodv).all(1)
-        #
         detected_indices = arangeic(length)[detection]
         detected_length = detection.to(torch.int64).sum(0)
         print(
@@ -237,7 +200,6 @@ class FindWeirdStuff:
         return detected_length, detected_indices
 
     def tracer(self, trprod):
-        #
         print("Examples:", end=" ")
         print("ExamplesPrePool:", end=" ")
         self.searchprod(self.Ll.ExamplesPrePool, trprod)
@@ -247,19 +209,13 @@ class FindWeirdStuff:
         self.searchprod(self.Ll.OutlierPrePool, trprod)
 
     def tracer_root(self, sigma):
-        #
         instancevector, _, _ = self.Dd.InOne(sigma)
         InitialData = self.Dd.initialdata(instancevector, 0)
-        #
         trprod = InitialData["prod"][0]
-        #
         self.tracer(trprod)
 
     def tracer_subroot(self, sigma, x, y, p):
-        #
         instancevector, _, _ = self.Dd.InOne(sigma)
         InitialData = self.Dd.initialdata(instancevector, 0)
-        #
         trprod = self.split_by_hand(InitialData, 0, x, y, p)
-        #
         self.tracer(trprod)

@@ -27,22 +27,15 @@ from utils import itf, itp
 class SgModel:
     def __init__(self, pp):
         self.pp = pp
-        #
         self.network = SGNetGlobal(self.pp).to(Dvc)
-        #
         self.network2 = SGNetLocal(self.pp).to(Dvc)
-        #
         self.average_local_loss = itf(1.0)
-        #
         # print(self.network)
         print("set up model network and network2")
-        #
         self.benchmark = False
-        #
         self.learning_rate = 0.002  # was 0.002, then 0.003, ...
         self.momentum = 0.95
         # self.weight_decay = 0.0001
-        #
         # self.optimizer = optim.SGD(self.network.parameters(), lr=self.learning_rate, momentum = self.momentum, weight_decay = self.weight_decay )
         # self.optimizer2 = optim.SGD(self.network2.parameters(), lr=self.learning_rate, momentum = self.momentum, weight_decay = self.weight_decay )
         self.optimizer = optim.SGD(
@@ -55,15 +48,11 @@ class SgModel:
             lr=self.learning_rate,
             momentum=self.momentum,
         )
-        #
         self.criterionCE = nn.CrossEntropyLoss()
         self.criterionA = nn.L1Loss()
         self.criterionB = nn.MSELoss()
-        #
         self.network2_trainable = True
-        #
         pp.global_params, pp.local_params = self.modelcount()
-        #
         self.softmax = nn.Softmax(dim=1)
 
     def modelcount(self):

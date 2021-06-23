@@ -23,7 +23,6 @@ from utils import CoherenceError, arangeic, binaryzbatch, itp, zbinary
 
 class SymmetricGroup:
     def __init__(self, p):
-        #
         if p < 1:
             print("can't initialize a symmetric group with size", p)
             raise CoherenceError("exiting")
@@ -34,10 +33,8 @@ class SymmetricGroup:
                 "is probably going to cause a memory overflow somewhere",
             )
             raise CoherenceError("exiting")
-        #
         self.p = p
         # self.subgroups_max = subgroups_max # this is not currently used
-        #
         self.gtlength = 1
         for i in range(self.p):
             self.gtlength *= i + 1
@@ -56,16 +53,13 @@ class SymmetricGroup:
             (k), dtype=torch.int64, device=Dvc
         )  # same as arangeic(k)
         krangevx2 = krange.view(k, 1, 1).expand(k, length_prev, k - 1)
-        #
         sgtprev_vx = sgtprev.view(1, length_prev, k - 1).expand(
             k, length_prev, k - 1
         )
-        #
         krange1vxr = krange.view(k, 1).expand(k, k).reshape(k * k)
         krange2vxr = krange.view(1, k).expand(k, k).reshape(k * k)
         gappedtablev = krange2vxr[(krange1vxr != krange2vxr)]
         gappedtable = gappedtablev.view(k, k - 1)
-        #
         afterpart = gappedtable[krangevx2, sgtprev_vx]
         beforepart = krange.view(k, 1, 1).expand(k, length_prev, 1)
         newtablev = torch.cat((beforepart, afterpart), 2)
@@ -108,9 +102,7 @@ class SymmetricGroup:
             .expand(gl, blength, p)
             .reshape(gl * blength, p)
         )
-        #
         gtb_mod = zbinarytable[brange, gtb]
-        #
         gt_binaryv = binaryzbatch(gl * blength, p, gtb_mod)
         gt_binary = gt_binaryv.view(gl, blength)
         # print("made group table binary")

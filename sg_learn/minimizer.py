@@ -608,7 +608,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
                                     lb_next_xyp = self.lowerbound[down_xyp]
                                     assert lb_next_xyp > 0
                                     lb_next[x, y] += lb_next_xyp
-                                    #
                                     ub_next_xyp = self.upperbound[down_xyp]
                                     ub_next[x, y] += ub_next_xyp
         return True
@@ -638,7 +637,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
                 itp(self.lowerbound[cut_instance]),
             )
             print("this was for sigma =", self.sigma)
-            #
             lb_next = torch.zeros(
                 (self.alpha, self.alpha), dtype=torch.int64, device=Dvc
             )
@@ -657,10 +655,8 @@ class Minimizer:  # this becomes the first element of the relations datatype
                                     lb_next_xyp = self.lowerbound[down_xyp]
                                     assert lb_next_xyp > 0
                                     lb_next[x, y] += lb_next_xyp
-                                    #
                                     ub_next_xyp = self.upperbound[down_xyp]
                                     ub_next[x, y] += ub_next_xyp
-            #
             print(
                 "lower bounds for the next cut locations x,y are as follows:"
             )

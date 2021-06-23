@@ -26,8 +26,6 @@ from utils import arangeic
 
 class Classifier:  # this is a very first part of classification up to isomorphism
     def __init__(self, P, HST: Historical):
-        #
-        #
         self.Pp = P
         self.rr4 = Relations4(self.Pp, HST)
         self.rr3 = self.rr4.rr2
@@ -39,12 +37,9 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         self.alpha3z = self.Pp.alpha3z
         self.beta = self.Pp.beta
         self.betaz = self.Pp.betaz
-        #
         self.sga = SymmetricGroup(self.alpha)
-        #
         self.eqlength = 0
         self.eqlist = None
-        #
         # self.iota = 24*24*4
         self.matrix = self.choosematrix()
         self.ilength = 10
@@ -66,20 +61,16 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         permutation2 = torch.randperm(48, device=Dvc)
         permutation3 = torch.randperm(48, device=Dvc)
         permutation4 = torch.randperm(48, device=Dvc)
-        #
         indices1 = permutation1[0:ilength]
         indices2 = permutation2[0:ilength]
         indices3 = permutation3[0:ilength]
         indices4 = permutation4[0:ilength]
-        #
         permutationV = torch.randperm(101, device=Dvc)
         vector = permutationV[0:ilength] - 50
         return indices1, indices2, indices3, indices4, vector
 
     def choosematrix(self):
-        #
         a = self.alpha
-        #
         # thematrix = torch.zeros((a,a,a,a),dtype = torch.int64,device=Dvc)
         for _ in range(10):
             permutation = torch.randperm((a * a * a * a), device=Dvc)
@@ -91,9 +82,7 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         a = self.alpha
         length = Data["length"]
         prod = Data["prod"]
-        #
         prodsum = prod.to(torch.int64).sum(3)
-        #
         assert (((prodsum == 1).all(2)).all(1)).all(0)
         _, table = torch.max(prod.to(torch.int64), 3)
         table1vx = table.view(length, a, a, 1, 1).expand(length, a, a, a, a)
@@ -103,11 +92,9 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         return eq, iz
 
     def orderinvariantSlice(self, Data):
-        #
         a = self.alpha
         length = Data["length"]
         eq, iz = self.geteq(Data)
-        #
         eqview = eq.view(1, length, a, a, a, a)
         izview = iz.view(1, length, a, a, 1, 1).expand(1, length, a, a, a, a)
         eqiz = torch.cat((eqview, izview), 0)
@@ -116,44 +103,32 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         eqiz_p4 = eqiz.permute(0, 1, 2, 4, 5, 3)
         eqiz_p5 = eqiz.permute(0, 1, 2, 5, 3, 4)
         eqiz_p6 = eqiz.permute(0, 1, 2, 5, 4, 3)
-        #
         eqiz_c1 = torch.cat(
             (eqiz, eqiz_p2, eqiz_p3, eqiz_p4, eqiz_p5, eqiz_p6), 0
         )
         eqiz_c2 = eqiz_c1.permute(0, 1, 3, 4, 5, 2)
         eqiz_c3 = eqiz_c1.permute(0, 1, 4, 5, 2, 3)
         eqiz_c4 = eqiz_c1.permute(0, 1, 5, 2, 3, 4)
-        #
         eqiz_cat = torch.cat(
             (eqiz_c1, eqiz_c2, eqiz_c3, eqiz_c4), 0
         )  # size 48.length.a.a.a.a
-        #
         eqiz_cat1 = eqiz_cat[self.indices1]
         eqiz_cat2 = eqiz_cat[self.indices2]
         eqiz_cat3 = eqiz_cat[self.indices3]
         eqiz_cat4 = eqiz_cat[self.indices4]
-        #
         eqiz_andor = (eqiz_cat1 | eqiz_cat2) & (eqiz_cat3 | eqiz_cat4)
-        #
         eqiz_sum = ((eqiz_andor.to(torch.int64).sum(5)).sum(4)).sum(3)
-        #
         vectorvx = self.vector.view(self.ilength, 1, 1).expand(
             self.ilength, length, a
         )
         invariant = (eqiz_sum * vectorvx).sum(0)
-        #
         return invariant
 
     def orderinvariant(self, Data):
-        #
         a = self.alpha
-        #
         length = Data["length"]
-        #
         lrange = arangeic(length)
-        #
         invariant = torch.zeros((length, a), dtype=torch.int64, device=Dvc)
-        #
         lower = 0
         for _ in range(length):
             upper = lower + 100
@@ -168,31 +143,23 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         return invariant
 
     def to_eqfunction(self, length, eq, iz):
-        #
         a = self.alpha
         a2 = a * a
-        #
         eqview = eq.view(length * a2, a2)
         izview = iz.view(length * a2)
-        #
         numerical = arangeic(a2).view(1, a2).expand(length * a2, a2) + 1
         numerical_eq = numerical * (eqview.to(torch.int64))
-        #
         _, eqfunctionv = torch.max(numerical_eq, 1)
         eqfunctionv[izview] = a2
         eqfunction = eqfunctionv.view(length, a2)
         return eqfunction
 
     def transform_eqfunction(self, length, eq, iz, gvector):
-        #
         a = self.alpha
         a2 = a * a
-        #
         assert len(gvector) == length
-        #
         eqv = eq.view(length, a, a, a, a)
         izv = iz.view(length, a, a)
-        #
         irangevx = (
             arangeic(length)
             .view(length, 1, 1, 1, 1)
@@ -203,28 +170,22 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         yrangevx = arangeic(a).view(1, 1, a, 1, 1).expand(length, a, a, a, a)
         zrangevx = arangeic(a).view(1, 1, 1, a, 1).expand(length, a, a, a, a)
         wrangevx = arangeic(a).view(1, 1, 1, 1, a).expand(length, a, a, a, a)
-        #
         xtransform = self.sga.grouptable[grangevx, xrangevx]
         ytransform = self.sga.grouptable[grangevx, yrangevx]
         ztransform = self.sga.grouptable[grangevx, zrangevx]
         wtransform = self.sga.grouptable[grangevx, wrangevx]
-        #
         eq_transform = eqv[
             irangevx, xtransform, ytransform, ztransform, wtransform
         ].view(length, a2, a2)
-        #
         irangeZvx = arangeic(length).view(length, 1, 1).expand(length, a, a)
         grangeZvx = gvector.view(length, 1, 1).expand(length, a, a)
         xrangeZvx = arangeic(a).view(1, a, 1).expand(length, a, a)
         yrangeZvx = arangeic(a).view(1, 1, a).expand(length, a, a)
-        #
         xtransformZ = self.sga.grouptable[grangeZvx, xrangeZvx]
         ytransformZ = self.sga.grouptable[grangeZvx, yrangeZvx]
-        #
         iz_transform = izv[irangeZvx, xtransformZ, ytransformZ].view(
             length, a2
         )
-        #
         eqfunction_transform = self.to_eqfunction(
             length, eq_transform, iz_transform
         )
@@ -233,52 +194,34 @@ class Classifier:  # this is a very first part of classification up to isomorphi
     def data_eqfunction_transform(self, Data, ivector, gvector):
         DataVector = self.rr1.indexselectdata(Data, ivector)
         length = DataVector["length"]
-        #
         eq, iz = self.geteq(DataVector)
-        #
         assert len(gvector) == length
-        #
         # eqfunction = self.to_eqfunction(length,eq,iz)
-        #
         eqfunction_transform = self.transform_eqfunction(
             length, eq, iz, gvector
         )
-        #
         return eqfunction_transform
 
     def uniqueinstances(self, length, eq_function):
-        #
         a = self.alpha
         a2 = a * a
-        #
         assert length > 0
-        #
         eqf1vx = eq_function.view(length, 1, a2).expand(length, length, a2)
         eqf2vx = eq_function.view(1, length, a2).expand(length, length, a2)
-        #
         equivalent = (eqf1vx == eqf2vx).all(2)
-        #
         first = arangeic(length).view(length, 1).expand(length, length)
         second = arangeic(length).view(1, length).expand(length, length)
-        #
         isrep = ((~equivalent) | (first <= second)).all(1)
-        #
         unique_length = isrep.to(torch.int64).sum(0)
         eq_unique = eq_function[isrep]
-        #
         assert unique_length > 0
-        #
         return unique_length, eq_unique
 
     def addSlice(self, length, eq_function):
-        #
         a = self.alpha
         a2 = a * a
-        #
         ulength, eq_unique = self.uniqueinstances(length, eq_function)
-        #
         alength = self.eqlength
-        #
         if alength == 0:
             self.eqlist = eq_unique
             self.eqlength = ulength
@@ -287,26 +230,18 @@ class Classifier:  # this is a very first part of classification up to isomorphi
             ulength, alength, a2
         )
         newvx = eq_unique.view(ulength, 1, a2).expand(ulength, alength, a2)
-        #
         already_known = ((alreadyvx == newvx).all(2)).any(1)
-        #
         detection = ~already_known
         detected_length = detection.to(torch.int64).sum(0)
         eq_detected = eq_unique[detection]
-        #
-        #
         self.eqlist = torch.cat((self.eqlist, eq_detected), 0)
-        #
         self.eqlength += detected_length
-        #
         return
 
     def addinstances(self, length, eq_function):
-        #
         if length == 0:
             # print("no instances to add")
             return
-        #
         lower = 0
         for _ in range(length):
             upper = lower + 500
@@ -320,15 +255,11 @@ class Classifier:  # this is a very first part of classification up to isomorphi
                 break
 
     def process(self, Data):
-        #
         a = self.alpha
         assert a > 1
-        #
         length = Data["length"]
         gl = self.sga.gtlength
-        #
         invariant = self.orderinvariant(Data)
-        #
         lrangevxr = (
             arangeic(length)
             .view(length, 1, 1)
@@ -340,7 +271,6 @@ class Classifier:  # this is a very first part of classification up to isomorphi
             .expand(length, gl, a)
             .reshape(length * gl, a)
         )
-        #
         invariant_gt = invariant[lrangevxr, gtvxr]
         detection = (
             (invariant_gt[:, 0 : a - 1]) <= (invariant_gt[:, 1:a])
@@ -355,12 +285,8 @@ class Classifier:  # this is a very first part of classification up to isomorphi
         gvector = (
             arangeic(gl).view(1, gl).expand(length, gl).reshape(length * gl)
         )[detection]
-        #
         verification = torch.zeros((length), dtype=torch.bool, device=Dvc)
         verification[ivector] = True
-        #
         assert verification.all(0)
-        #
         eq_function = self.data_eqfunction_transform(Data, ivector, gvector)
-        #
         self.addinstances(dlength, eq_function)

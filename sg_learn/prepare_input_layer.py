@@ -80,7 +80,6 @@ class PrepareInputLayer(nn.Module):
             prod_denom = torch.clamp(prod_denom, 1.0, 100.0)
             prod_ren = prod_f / prod_denom
             prod_ren = (bz * prod_ren) - 1.0
-            #
             left_f = left_data.float()
             left_denom = (
                 left_f.sum(1)
@@ -90,7 +89,6 @@ class PrepareInputLayer(nn.Module):
             left_denom = torch.clamp(left_denom, 1.0, 100.0)
             left_ren = (left_f / left_denom).view(length, 2 * bz, a, a)
             left_ren = left_ren - 0.5
-            #
             right_f = right_data.float()
             right_denom = (
                 right_f.sum(1)
@@ -100,7 +98,6 @@ class PrepareInputLayer(nn.Module):
             right_denom = torch.clamp(right_denom, 1.0, 100.0)
             right_ren = (right_f / right_denom).view(length, 2 * bz, a, a)
             right_ren = right_ren - 0.5
-            #
             ternary_f = ternary_data.float()
             ternary_denom = (
                 ternary_f.sum(1)
@@ -112,11 +109,9 @@ class PrepareInputLayer(nn.Module):
                 length, 2 * a, a, a
             )
             ternary_ren = ternary_ren - 0.5
-            #
             initial_data = torch.cat(
                 (prod_ren, left_ren, right_ren, ternary_ren), 1
             ).float()
         #
         assert initial_data.size() == torch.Size([length, self.channels, a, a])
-        #
         return initial_data, prod_data

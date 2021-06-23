@@ -91,7 +91,6 @@ def memReport(style):  # by QuantScientist Solomon K @smth
             itp(elcount),
             "elements",
         )
-        #
         _, indices = torch.sort(elements, descending=True)
         upper = 5
         if upper > count:

@@ -501,15 +501,10 @@ class Learner:  # training the neural networks
             if not smb:
                 print("exit training")
                 return
-            #
             for _ in range(iterationsperbatch):
-                #
                 M.optimizer.zero_grad()
-                #
                 NoiseData = self.noise(DataBatch)
-                #
                 predictedscore = M.network(NoiseData)
-                #
                 if style == "score-A":
                     loss = M.criterionA(predictedscore, scorebatch)
                 if style == "score-B":
@@ -520,31 +515,24 @@ class Learner:  # training the neural networks
                     loss = (lossA + lossB) / 2
                 loss.backward()
                 M.optimizer.step()
-            #
-        #
         print("-", end=" ")
-        #
         return
 
     def printlossaftertrainingGlobal(self, M, minibatchsize, topicture):
-        #
         smb, DataBatch, scorebatch = self.selectminibatch(minibatchsize)
         if not smb:
             print("data too small")
             return
-        #
         mblength = DataBatch["length"]
         predictedscore = M.network(DataBatch)
         lossa = M.criterionA(predictedscore, scorebatch)
         lra = numpr(lossa, 3)
         lossb = M.criterionB(predictedscore, scorebatch)
         lrb = numpr(lossb, 3)
-        #
         with torch.no_grad():
             self.globalL1level += lossa
             self.globalL1level *= 0.5
             self.globalL1level = torch.clamp(self.globalL1level, 0.005, 1.0)
-        #
         print(
             "on ",
             itp(mblength),
@@ -553,36 +541,25 @@ class Learner:  # training the neural networks
             "MSE loss",
             lrb,
         )
-        #
         if topicture:
-            #
             print("global L1 loss level", numpr(self.globalL1level, 4))
-            #
             self.HST.record_loss("global", lossa, lossb)
-            #
             dotsize = torch.zeros((mblength), dtype=torch.int, device=Dvc)
             dotsize[:] = 2
             dotsize_np = nump(dotsize)
-            #
             calcscore_npr = numpr(scorebatch, 3)
             predscore_npr = numpr(predictedscore, 3)
-            #
             scoremax, _ = torch.max(scorebatch, 0)
             linelimit = numpr(scoremax, 1)
-            #
-            #
             plt.clf()
             plt.scatter(calcscore_npr, predscore_npr, dotsize_np)
-            #
             plt.plot([0.0, linelimit], [0.0, 0.0], "g-", lw=1)
             plt.plot([0.0, 0.0], [0.0, linelimit], "g-", lw=1)
             plt.plot([0.0, linelimit], [0.0, linelimit], "r-", lw=1)
             plt.show()
 
     def learningGlobal(self, M, globaliterations):
-        #
         self.printlossaftertrainingGlobal(M, 500, True)
-        #
         tweak_cursor = self.HST.global_tweak_cursor
         tdensity = self.pp.tweak_density * (
             self.pp.tweak_decay ** tweak_cursor
@@ -602,7 +579,6 @@ class Learner:  # training the neural networks
         M.tweak_network(M.network, tdensity, tepsilon)
         self.printlossaftertrainingGlobal(M, 500, True)
         print("training", end=" ")
-        #
         explore_pre_length = self.ExplorePrePool["length"]
         example_pre_length = self.ExamplesPrePool["length"]
         example_length = self.Examples["length"]
@@ -613,7 +589,6 @@ class Learner:  # training the neural networks
             example_pre_length,
             example_length,
         )
-        #
         for _ in range(globaliterations):
             print("/", end=" ")
             self.trainingGlobal(M, 2, 20, "score-C", 20, "mb20")
@@ -623,7 +598,6 @@ class Learner:  # training the neural networks
             self.trainingGlobal(M, 3, 8, "score-C", 20, "mb20")
             self.trainingGlobal(M, 3, 5, "score-C", 40, "mb40")
             self.trainingGlobal(M, 5, 3, "score-C", 30, "mb30")
-            #
             print(" ")
             self.printlossaftertrainingGlobal(M, 300, False)
             print("  ")
@@ -638,14 +612,11 @@ class Learner:  # training the neural networks
         bz = self.betaz
         length = Data["length"]
         prod = Data["prod"]
-        #
         xypscore_exp = torch.zeros(
             (length, a, a, bz), dtype=torch.float, device=Dvc
         )
-        #
         availablexyp = self.rr1.availablexyp(length, prod)
         availablexypr = availablexyp.reshape(length * a * a * bz)
-        #
         lrangevxr = (
             arangeic(length)
             .view(length, 1, 1, 1)
@@ -670,20 +641,14 @@ class Learner:  # training the neural networks
             .expand(length, a, a, bz)
             .reshape(length * a * a * bz)
         )
-        #
         ivector = lrangevxr[availablexypr]
         xvector = xrangevxr[availablexypr]
         yvector = yrangevxr[availablexypr]
         pvector = prangevxr[availablexypr]
-        #
         NewData = self.rr1.upsplitting(
             Data, ivector, xvector, yvector, pvector
         )
-        #
-        #
         ndlength = NewData["length"]
-        #
-        #
         LocalExamples = self.rr1.nulldata()
         detection = torch.zeros((ndlength), dtype=torch.bool, device=Dvc)
         newextent_exp = torch.zeros((ndlength), dtype=torch.float, device=Dvc)
@@ -702,14 +667,12 @@ class Learner:  # training the neural networks
             newactive_s, newdone_s, newimpossible_s = self.rr2.filterdata(
                 AssocNewDataSlice
             )
-            #
             ActiveNewDataSlice = self.rr1.detectsubdata(
                 AssocNewDataSlice, newactive_s
             )
             LocalExamples = self.rr1.appenddata(
                 ActiveNewDataSlice, LocalExamples
             )
-            #
             predictedscore_s = M.network(AssocNewDataSlice).detach()
             if torch.isnan(predictedscore_s).any(0):
                 raise CoherenceError("predicted score nan")
@@ -723,15 +686,11 @@ class Learner:  # training the neural networks
             lower = upper
             if lower >= ndlength:
                 break
-        #
         xypscore_exp[ivector, xvector, yvector, pvector] = newextent_exp
-        #
         xyscore_sum = xypscore_exp.sum(3)
-        #
         xyscore_log = torch.log10(
             xyscore_sum + 1.0
         )  # here the +1. is for the upper node itself.
-        #
         # now replace the global scores by these ones too: here output the min of availables
         availablexyr = self.rr1.availablexy(length, prod).view(length * a2)
         xyscorer = xyscore_log.view(length * a2)
@@ -739,24 +698,18 @@ class Learner:  # training the neural networks
         xyscorer_mod[~availablexyr] = 20.0
         xyscore_min, _ = torch.min(xyscorer_mod.view(length, a2), 1)
         assert (xyscore_min < 10.0).all(0)
-        #
         return xyscore_log, xyscore_min, LocalExamples
 
     def predictedscoreLocal(self, M, ivector, xvector, yvector):
         a = self.alpha
         length = self.Examples["length"]
         prod = self.Examples["prod"]
-        #
         availablexy = self.rr1.availablexy(length, prod).view(length, a, a)
-        #
         assert availablexy[ivector, xvector, yvector].all(0)
-        #
         Data = self.rr1.indexselectdata(self.Examples, ivector)
         dlength = Data["length"]
         dlrange = arangeic(dlength)
-        #
         NoiseData = self.noise(Data)
-        #
         pre_score = M.network2(NoiseData)
         predictedscore = pre_score[dlrange, xvector, yvector]
         return predictedscore
@@ -764,13 +717,11 @@ class Learner:  # training the neural networks
     def adapt_local_scores(self, ivector, xvector, yvector):
         a = self.alpha
         ExamplePool = self.Examples
-        #
         length = len(ivector)
         prod = (ExamplePool["prod"])[ivector]
         availablexyv = self.rr1.availablexy(length, prod).reshape(
             length * a * a
         )
-        #
         available_count = (
             availablexyv.view(length, a * a).to(torch.int64).sum(1)
         )
@@ -781,20 +732,16 @@ class Learner:  # training the neural networks
         )
         available_count_xf -= 1.0
         available_count_xf = torch.clamp(available_count_xf, 1.0, 100.0)
-        #
         score = self.localscores[ivector].reshape(length * a * a)
         score[~availablexyv] = 100.0
         _, indices = torch.sort(score.view(length, a * a), 1)
         position = torch.zeros((length, a * a), dtype=torch.float, device=Dvc)
-        #
         lrangevx = arangeic(length).view(length, 1).expand(length, a * a)
         a2rangevx = arangeic(a * a).view(1, a * a).expand(length, a * a)
         position[lrangevx, indices] = (
             a2rangevx.to(torch.float) / available_count_xf
         )
-        #
         position_score = position + score.view(length, a * a)
-        #
         adapted_score = position_score.view(length, a, a)[
             arangeic(length), xvector, yvector
         ]
@@ -810,7 +757,6 @@ class Learner:  # training the neural networks
         xp_availablexy = self.rr1.availablexy(xplength, xpprod).view(
             xplength, a, a
         )
-        #
         irangevxr = (
             arangeic(xplength)
             .view(xplength, 1, 1)
@@ -829,27 +775,20 @@ class Learner:  # training the neural networks
             .expand(xplength, a, a)
             .reshape(xplength * a * a)
         )
-        #
         avdetect = xp_availablexy[irangevxr, xrangevxr, yrangevxr]
-        #
         ivector_all = irangevxr[avdetect]
         xvector_all = xrangevxr[avdetect]
         yvector_all = yrangevxr[avdetect]
-        #
         avlength = avdetect.to(torch.int64).sum(0)
-        #
         permutation = torch.randperm(avlength, device=Dvc)
         mblength = minibatchsize
         if mblength > avlength:
             mblength = avlength
         indices = permutation[0:mblength]
-        #
         ivector = ivector_all[indices]
         xvector = xvector_all[indices]
         yvector = yvector_all[indices]
-        #
         scorebatch = self.adapt_local_scores(ivector, xvector, yvector)
-        #
         return True, ivector, xvector, yvector, scorebatch
 
     def trainingLocal(
@@ -865,7 +804,6 @@ class Learner:  # training the neural networks
             raise CoherenceError(
                 "only allowed styles are score-A or score-B or score-C"
             )
-        #
         if self.trainingprint:
             print(
                 "/",
@@ -887,25 +825,18 @@ class Learner:  # training the neural networks
             if not smb:
                 print("exit training")
                 return
-            #
             for _ in range(iterationsperbatch):
-                #
                 M.optimizer2.zero_grad()
-                #
                 predictedscore = self.predictedscoreLocal(
                     M, ivector, xvector, yvector
                 )
-                #
                 if style == "score-C":
                     lossA = M.criterionA(predictedscore, scorebatch)
                     lossB = M.criterionB(predictedscore, scorebatch)
                     loss = (lossA + lossB) / 2.0
                 loss.backward()
                 M.optimizer2.step()
-            #
-        #
         print("-", end=" ")
-        #
         return
 
     def printlossaftertrainingLocal(self, M, minibatchsize, topicture):
@@ -915,22 +846,16 @@ class Learner:  # training the neural networks
         if not smb:
             print("data too small")
             return
-        #
         mblength = len(ivector)
-        #
         predictedscore = self.predictedscoreLocal(M, ivector, xvector, yvector)
-        #
         lossa = M.criterionA(predictedscore, scorebatch)
         lra = numpr(lossa, 3)
-        #
         lossb = M.criterionB(predictedscore, scorebatch)
         lrb = numpr(lossb, 3)
-        #
         lossa_detach = lossa.detach()
         M.average_local_loss = (
             0.9 * M.average_local_loss + 0.1 * lossa_detach
         )  # change the variable name later!
-        #
         print(
             "on ",
             itp(mblength),
@@ -939,38 +864,27 @@ class Learner:  # training the neural networks
             "MSE loss",
             lrb,
         )
-        #
         if topicture:
-            #
             self.HST.record_loss("local", lossa, lossb)
-            #
             print("average local loss", numpr(M.average_local_loss, 4))
-            #
             dotsize = torch.zeros((mblength), dtype=torch.int, device=Dvc)
             dotsize[:] = 2
             dotsize_np = nump(dotsize)
-            #
             calcscore_npr = numpr(scorebatch, 3)
             predscore_npr = numpr(predictedscore, 3)
-            #
             scoremax, _ = torch.max(scorebatch, 0)
             linelimit = numpr(scoremax, 1)
-            #
             plt.clf()
             plt.scatter(calcscore_npr, predscore_npr, dotsize_np)
-            #
             # linelimit = 1.0
             plt.plot([0.0, linelimit], [0.0, 0.0], "g-", lw=1)
             plt.plot([0.0, 0.0], [0.0, linelimit], "g-", lw=1)
             plt.plot([0.0, linelimit], [0.0, linelimit], "r-", lw=1)
-            #
             plt.show()
         return
 
     def learningLocal(self, M, globaliterations):
-        #
         self.printlossaftertrainingLocal(M, 500, True)
-        #
         tweak_cursor = self.HST.local_tweak_cursor
         tdensity = self.pp.tweak_density * (
             self.pp.tweak_decay ** tweak_cursor
@@ -990,7 +904,6 @@ class Learner:  # training the neural networks
         M.tweak_network(M.network2, tdensity, tepsilon)
         self.printlossaftertrainingLocal(M, 500, True)
         print("training", end=" ")
-        #
         explore_pre_length = self.ExplorePrePool["length"]
         example_pre_length = self.ExamplesPrePool["length"]
         example_length = self.Examples["length"]
@@ -1001,7 +914,6 @@ class Learner:  # training the neural networks
             example_pre_length,
             example_length,
         )
-        #
         for _ in range(globaliterations):
             print("/", end=" ")
             self.trainingLocal(M, 3, 20, "score-C", 20, "mb20")
@@ -1011,7 +923,6 @@ class Learner:  # training the neural networks
             self.trainingLocal(M, 3, 3, "score-C", 20, "mb20")
             self.trainingLocal(M, 3, 2, "score-C", 40, "mb40")
             self.trainingLocal(M, 3, 1, "score-C", 30, "mb30")
-            #
             print(" ")
             self.printlossaftertrainingLocal(M, 300, False)
             print("  ")

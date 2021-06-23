@@ -113,7 +113,6 @@ class Relations3:
             )
             epsilon = torch.rand(length * a2, device=Dvc)
             networkscorer += epsilon_factor * epsilon
-            #
             phase = Data["info"][:, self.pp.phase]
             tirage = torch.rand(length, device=Dvc)
             detection = (phase == 1) | ((tirage < 0.1) & (phase == 2))
@@ -124,7 +123,6 @@ class Relations3:
             )
             randomscore = torch.rand(length * a2, device=Dvc)
             networkscorer[detectionvxr] = randomscore[detectionvxr]
-            #
         #
         networkscorer = torch.clamp(networkscorer, -1.0, 10.0)
         networkscorer[~availablexyr] = 20.0
@@ -157,11 +155,8 @@ class Relations3:
         prod = DataToSplit["prod"]
         #
         availablexyp = self.rr1.availablexyp(length, prod).view(length, a2, bz)
-        #
         xyvector = self.network_vcuts(M, DataToSplit, randomize)
-        #
         self.addvalencies(availablexyp, xyvector)
-        #
         lrangevxr = (
             arangeic(length)
             .view(length, 1)
@@ -174,28 +169,18 @@ class Relations3:
         bzrangevxr = (
             arangeic(bz).view(1, bz).expand(length, bz).reshape(length * bz)
         )
-        #
         verticaldetect = availablexyp[lrangevxr, xyvectorvxr, bzrangevxr]
-        #
-        #
         ivector_vert = lrangevxr[verticaldetect]
         xyvector_vert = xyvectorvxr[verticaldetect]
         pvector_vert = bzrangevxr[verticaldetect]
-        #
         prx = arangeic(a).view(a, 1).expand(a, a).reshape(a2)
         pry = arangeic(a).view(1, a).expand(a, a).reshape(a2)
-        #
         xvector_vert = prx[xyvector_vert]
         yvector_vert = pry[xyvector_vert]
-        #
         NewData = self.rr1.upsplitting(
             DataToSplit, ivector_vert, xvector_vert, yvector_vert, pvector_vert
         )
-        #
-        #
         ndlength = NewData["length"]
-        #
-        #
         AssocNewData = self.rr1.nulldata()
         detection = torch.zeros((ndlength), dtype=torch.bool, device=Dvc)
         newactive = torch.zeros((ndlength), dtype=torch.bool, device=Dvc)
@@ -221,11 +206,8 @@ class Relations3:
             lower = upper
             if lower >= ndlength:
                 break
-        #
         NewActiveData = self.rr1.detectsubdata(AssocNewData, newactive)
-        #
         NewDoneData = self.rr1.detectsubdata(AssocNewData, newdone)
-        #
         if NewActiveData["length"] > 0:
             phase1 = NewActiveData["info"][:, self.pp.phase] == 1
             phase2 = NewActiveData["info"][:, self.pp.phase] == 2
@@ -235,12 +217,10 @@ class Relations3:
             newphase[phase1] = 0
             newphase[phasechange] = 1
             NewActiveData["info"][:, self.pp.phase] = newphase
-        #
         self.HST.current_proof_impossible_count += newimpossible.to(
             torch.int64
         ).sum(0)
         self.HST.current_proof_done_count += newdone.to(torch.int64).sum(0)
-        #
         if self.pp.verbose:
             print(" >>>")
             print("DataToSplit", itp(DataToSplit["length"]))
@@ -248,5 +228,4 @@ class Relations3:
             print("NewActiveData", itp(NewActiveData["length"]))
             print("NewDoneData", itp(NewDoneData["length"]))
             print("----------------------------------")
-        #
         return NewActiveData, NewDoneData

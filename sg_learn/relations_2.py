@@ -198,11 +198,8 @@ class Relations2:
         for _ in range(1000):
             priorknowledge = self.rr1.knowledge(NextData)
             NextData = self.modifyternaryStep(NextData)
-            #
             NextData = self.modifyleftrightStep(NextData)
-            #
             NextData = self.modifyprodStep(NextData)
-            #
             nextknowledge = self.rr1.knowledge(NextData)
             nextdonedetect = priorknowledge >= nextknowledge
             subset_nextdone = composedetections(length, subset, nextdonedetect)
@@ -210,7 +207,6 @@ class Relations2:
             OutputData = self.rr1.insertdata(
                 OutputData, subset_nextdone, NextDoneData
             )
-            #
             subset = subset & (~subset_nextdone)
             if subset.to(torch.int).sum(0) == 0:
                 break
@@ -315,7 +311,6 @@ class Relations2:
             self.halfones_count += (
                 (halfonesdetect & (~impossibledetect)).to(torch.int64).sum(0)
             )
-            #
             impossibledetect = impossibledetect | halfonesdetect
         #
         donedetect = self.doneFilter(Data)

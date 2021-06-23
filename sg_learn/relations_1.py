@@ -23,27 +23,19 @@ from utils import arangeic, itt, nump, zbinary
 
 class Relations1:
     def __init__(self, pp):
-        #
         self.pp = pp
-        #
         self.alpha = self.pp.alpha
         self.alpha2 = self.alpha * self.alpha
         self.alpha3 = self.alpha * self.alpha * self.alpha
         self.alpha3z = self.alpha3 + 1
         self.beta = self.pp.beta
         self.betaz = self.beta + 1
-        #
         # self.model = self.mm
-        #
         self.qvalue = self.pp.qvalue
-        #
         self.ascore_max = self.pp.ascore_max
-        #
         self.infosize = self.pp.infosize
         self.pastsize = self.pp.pastsize
         self.futuresize = self.pp.futuresize
-        #
-        #
         self.ar1 = (
             arangeic(self.alpha)
             .view(self.alpha, 1)
@@ -57,7 +49,6 @@ class Relations1:
             .clone()
         )
         self.ida = self.ar1 == self.ar2
-        #
         self.a3r1 = (
             arangeic(self.alpha3)
             .view(self.alpha3, 1)
@@ -71,7 +62,6 @@ class Relations1:
             .clone()
         )
         self.eqa3 = self.a3r1 == self.a3r2
-        #
         self.a3zr1 = (
             arangeic(self.alpha3z)
             .view(self.alpha3z, 1)
@@ -85,21 +75,18 @@ class Relations1:
             .clone()
         )
         self.eqa3z = self.a3zr1 == self.a3zr2
-        #
         self.iblength = 2 ** (2 * self.beta)
         self.ibarray = torch.zeros(
             (self.iblength, 2 * self.beta), dtype=torch.bool, device=Dvc
         )
         for z in range(self.iblength):
             self.ibarray[z] = zbinary(2 * self.beta, z)
-        #
         self.betazsubsets = (
             self.makebetazsubsets()
         )  # at location j,:,: it is for size (j+1)
         self.quantities = (
             self.betazsubsets[:, 0 : self.beta].to(torch.int).sum(1)
         )  # the size of the subset as a function of z
-        #
 
     # general manipulation of data
 
@@ -108,9 +95,7 @@ class Relations1:
         prod = Data["prod"]
         a = self.alpha
         bz = self.betaz
-        #
         assert i < length
-        #
         printarray = torch.zeros((a, a), dtype=torch.int, device=Dvc)
         printarray += 9 * (10 ** bz)
         for p in range(bz):
@@ -168,64 +153,46 @@ class Relations1:
             return self.copydata(Data1)
         Output = {}
         Output["length"] = Data1["length"] + Data2["length"]
-        #
         for ky in Data1.keys():
             if ky != "length":
                 Output[ky] = torch.cat((Data1[ky], Data2[ky]), 0)
         return Output
 
     def indexselectdata(self, Data, indices):
-        #
         if len(indices) == 0:
             return self.nulldata()
-        #
         Output = {}
-        #
         Output["length"] = len(indices)
-        #
         for ky in Data.keys():
             if ky != "length":
                 Output[ky] = (Data[ky])[indices].clone().detach()
-        #
         return Output
 
     def detectsubdata(self, Data, detection):
-        #
         assert len(detection) == Data["length"]
-        #
         sublength = detection.to(torch.int).sum(0)
         if sublength == 0:
             return self.nulldata()
-        #
         Output = {}
-        #
         Output["length"] = sublength
-        #
         for ky in Data.keys():
             if ky != "length":
                 Output[ky] = (Data[ky])[detection].detach()
-        #
         return Output
 
     def insertdata(self, Data, detection, SubData):
-        #
         assert set(Data.keys()) == set(SubData.keys())
-        #
         sublength = SubData["length"]
         assert detection.to(torch.int).sum(0) == sublength
-        #
         if sublength == 0:
             return Data
-        #
         Output = {}
         Output["length"] = itt(Data["length"])
-        #
         for ky in Data.keys():
             if ky != "length":
                 outputitem = Data[ky].clone().detach()
                 outputitem[detection] = SubData[ky]
                 Output[ky] = outputitem
-        #
         return Output
 
     def knowledge(self, Data):  # now it increases as we refine
@@ -236,11 +203,9 @@ class Relations1:
         left = Data["left"]
         right = Data["right"]
         ternary = Data["ternary"]
-        #
         if length == 0:
             zerokn = torch.zeros((1), dtype=torch.int, device=Dvc)
             return zerokn
-        #
         output = torch.zeros((length), dtype=torch.int64, device=Dvc)
         output -= prod.to(torch.int64).view(length, a * a * bz).sum(1)
         output -= left.to(torch.int64).view(length, a * bz * 2).sum(1)
@@ -253,9 +218,7 @@ class Relations1:
         prodsum = prod.to(torch.int64).sum(3)
         possible = ((prodsum > 0).all(2)).all(1)
         possiblexy = possible.view(length, 1).expand(length, a2)
-        #
         optionalxy = (prodsum > 1).view(length, a2)
-        #
         available_xy = possiblexy & optionalxy
         return available_xy
 
@@ -265,11 +228,9 @@ class Relations1:
         prodsum = prod.to(torch.int64).sum(3)
         possible = ((prodsum > 0).all(2)).all(1)
         possiblexyp = possible.view(length, 1, 1, 1).expand(length, a, a, bz)
-        #
         optionalxyp = (
             (prodsum > 1).view(length, a, a, 1).expand(length, a, a, bz)
         )
-        #
         available_xyp = prod & possiblexyp & optionalxyp
         return available_xyp
 
@@ -285,22 +246,17 @@ class Relations1:
         UpData = self.indexselectdata(Data, ivector)
         length = UpData["length"]
         prod = UpData["prod"]
-        #
         xrangevx = arangeic(a).view(1, a, 1, 1).expand(length, a, a, bz)
         yrangevx = arangeic(a).view(1, 1, a, 1).expand(length, a, a, bz)
         prangevx = arangeic(bz).view(1, 1, 1, bz).expand(length, a, a, bz)
-        #
         xvectorvx = xvector.view(length, 1, 1, 1).expand(length, a, a, bz)
         yvectorvx = yvector.view(length, 1, 1, 1).expand(length, a, a, bz)
         pvectorvx = pvector.view(length, 1, 1, 1).expand(length, a, a, bz)
-        #
         newprod = prod & (
             (xrangevx != xvectorvx)
             | (yrangevx != yvectorvx)
             | (prangevx == pvectorvx)
         )
-        #
         UpData["prod"] = newprod
         UpData["depth"] += 1
-        #
         return UpData
