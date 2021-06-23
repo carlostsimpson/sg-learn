@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -50,24 +50,11 @@ def zbinary(
     return outputarray
 
 
-def binaryz(depth, binarray):
-    thez = 0
-    for i in range(depth):
-        thez += binarray.to(torch.int)[i] * 2 ** i
-    return thez
-
-
 def binaryzbatch(length, depth, binarray_batch):
     zbatch = torch.zeros((length), dtype=torch.int64, device=Dvc)
     for i in range(depth):
         zbatch += binarray_batch.to(torch.int)[:, i] * (2 ** i)
     return zbatch
-
-
-def composepermutations(vector1, vector2):
-    vector2i64 = vector2.to(torch.int64)
-    composition = vector1[vector2i64]
-    return composition
 
 
 def composedetections(
@@ -104,8 +91,7 @@ def memReport(style):  # by QuantScientist Solomon K @smth
             itp(elcount),
             "elements",
         )
-        #
-        values, indices = torch.sort(elements, descending=True)
+        _, indices = torch.sort(elements, descending=True)
         upper = 5
         if upper > count:
             upper = count
@@ -117,7 +103,6 @@ def memReport(style):  # by QuantScientist Solomon K @smth
         for obj in gc.garbage:
             if torch.is_tensor(obj):
                 print(type(obj), obj.size())
-    return
 
 
 def arangeic(x):
@@ -132,26 +117,17 @@ def itp(x):  # integer to print
 def itt(x):  # integer to torch
     if torch.is_tensor(x):
         return x
-    else:
-        return torch.tensor(x, device=Dvc)
+    return torch.tensor(x, device=Dvc)
 
 
 def itf(x):  # integer to torch.float
     return itt(x).to(torch.float)
 
 
-def tdetach(x):
-    if torch.is_tensor(x):
-        return x.detach()
-    else:
-        return x
-
-
 def nump(x):
     if torch.is_tensor(x):
         return x.detach().to(CpuDvc).numpy()
-    else:
-        return x
+    return x
 
 
 def numpr(x, k):

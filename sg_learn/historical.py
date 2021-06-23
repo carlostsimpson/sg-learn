@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -28,23 +28,19 @@ class Historical:
         self.hwidth = 20
         self.hfwidth = 10
         self.prwidth = 20
-        #
         self.hlength = 0
-        #
         self.histi = torch.zeros(
             (self.hlength_max, self.hwidth), dtype=torch.int64, device=Dvc
         )
         self.histf = torch.zeros(
             (self.hlength_max, self.hfwidth), dtype=torch.float, device=Dvc
         )
-        #
         self.proofrecord = torch.zeros(
             (self.hlength_max, self.prwidth), dtype=torch.int64, device=Dvc
         )
         self.prcursor = 0
         self.local_tweak_cursor = 0
         self.global_tweak_cursor = 0
-        #
         self.current_proof_valency_frequency = torch.zeros(
             (10), dtype=torch.int64, device=Dvc
         )
@@ -52,14 +48,10 @@ class Historical:
         self.current_proof_done_count = 0
         self.current_proof_passive_count = 0
         self.current_proof_benchmark = 0
-        #
         self.title_text_sigma_proof = None
         self.title_text_sigma_train = None
-        #
         self.training_counter = 0
-        #
         self.proof_nodes_max = 200000
-        #
         self.D = {
             "Global": 0,
             "Local": 1,
@@ -84,7 +76,6 @@ class Historical:
         self.current_proof_done_count = 0
         self.current_proof_passive_count = 0
         self.current_proof_benchmark = 0
-        return
 
     def record_current_proof(self, Pp, benchmark=False):
         """
@@ -109,10 +100,8 @@ class Historical:
             print("recorded full proof", end=" ")
         self.print_proof_recordi(self.prcursor, Pp)
         self.prcursor += 1
-        return
 
     def print_proof_recordi(self, i, Pp):
-        #
         upperval = Pp.beta + 2
         if upperval > 10:
             upperval = 10
@@ -120,7 +109,6 @@ class Historical:
         donecount = itp(self.proofrecord[i, 1])
         passivecount = itp(self.proofrecord[i, 2])
         valency = nump(self.proofrecord[i, 3 : 3 + upperval])
-        #
         print(
             ". done",
             donecount,
@@ -131,10 +119,8 @@ class Historical:
             "by valency",
             valency,
         )
-        return
 
     def print_proof_records(self, Pp):
-        #
         ###
         if Pp.profile_filter_on:
             prof_filt = "on"
@@ -146,11 +132,9 @@ class Historical:
             ho_filt = "off"
         bl_iter = Pp.basicloop_iterations
         bl_train = Pp.basicloop_training_iterations
-        #
         global_p = itp(Pp.global_params)
         local_p = itp(Pp.local_params)
         ###
-        #
         print("-------------------------------------------------------------")
         print(
             "proof records for a,b =",
@@ -176,7 +160,6 @@ class Historical:
                 proof_number += 1
             self.print_proof_recordi(i, Pp)
         print("-------------------------------------------------------------")
-        return
 
     def noiselevel(self, P, count_tensor):
         counterf = count_tensor.to(torch.float)
@@ -196,7 +179,6 @@ class Historical:
         self.local_tweak_cursor = 0
         self.global_tweak_cursor = 0
         print("reinitialized history")
-        return
 
     def increment(self):
         if self.hlength >= self.hlength_max:
@@ -212,20 +194,12 @@ class Historical:
         self.histi[cursor, 0] = self.D["Parameters"]
         self.histi[cursor, 1] = alpha
         self.histi[cursor, 2] = beta
-        return
 
     def record_driver(self, alpha, beta):
         cursor = self.increment()
         self.histi[cursor, 0] = self.D["Driver"]
         self.histi[cursor, 1] = alpha
         self.histi[cursor, 2] = beta
-        return
-
-    def record_model(self, n):
-        cursor = self.increment()
-        self.histi[cursor, 0] = self.D["Model"]
-        self.histi[cursor, 1] = n
-        return
 
     def record_loss(self, style, L1_loss, MSE_loss):
         cursor = self.increment()
@@ -244,9 +218,7 @@ class Historical:
             MSE_loss_detach = MSE_loss
         self.histf[cursor, 0] = L1_loss.detach()
         self.histf[cursor, 1] = MSE_loss_detach
-        #
         self.training_counter += 1
-        return
 
     def record_training(
         self,
@@ -257,7 +229,6 @@ class Historical:
         example_pool,
     ):
         cursor = self.increment()
-        #
         self.histi[cursor, 0] = self.D["Training"]
         if style != "global" and style != "local":
             raise CoherenceError("unsupported style in record_training")
@@ -269,11 +240,9 @@ class Historical:
         self.histi[cursor, 3] = explore_pre_pool
         self.histi[cursor, 4] = example_pre_pool
         self.histi[cursor, 5] = example_pool
-        return
 
     def record_full_proof(self, M, steps, cumulative_nodes, done_nodes):
         cursor = self.increment()
-        #
         if M.benchmark:
             self.histi[cursor, 0] = self.D["BenchmarkProof"]
         else:
@@ -281,14 +250,11 @@ class Historical:
         self.histi[cursor, 1] = steps
         self.histi[cursor, 2] = cumulative_nodes
         self.histi[cursor, 3] = done_nodes
-        return
 
     def record_dropout_proof(self, style, dropout, steps, ECN):
         cursor = self.increment()
-        #
         if style != "regular" and style != "adaptive" and style != "uniform":
             raise CoherenceError("unsupported style in record_dropout_proof")
-        #
         self.histi[cursor, 0] = self.D["DropoutProof"]
         if style == "regular":
             self.histi[cursor, 1] = self.D["Regular"]
@@ -300,111 +266,11 @@ class Historical:
         self.histi[cursor, 3] = steps
         ecnr = torch.round(ECN).to(torch.int64)
         self.histi[cursor, 4] = ecnr
-        return
-
-    def print_history(self):
-        length = self.hlength
-        print("--  --  --  --  --  --  --  --  --  --  --  --  --  --  --")
-        print("     printing history of length", itp(length))
-        print("--  --  --  --  --  --  --  --  --  --  --  --  --  --  --")
-        for cursor in range(length):
-            tag = self.histi[cursor, 0]
-            a = itp(self.histi[cursor, 1])
-            b = itp(self.histi[cursor, 2])
-            c = itp(self.histi[cursor, 3])
-            d = itp(self.histi[cursor, 4])
-            e = itp(self.histi[cursor, 5])
-            f = itp(self.histi[cursor, 6])
-            #
-            x = numpr(self.histf[cursor, 0], 3)
-            y = numpr(self.histf[cursor, 1], 3)
-            #
-            print("(", cursor, ")--", end="")
-            #
-            if tag == self.D["Parameters"]:
-                print("setting parameters for alpha=", a, "beta=", b)
-            #
-            if tag == self.D["Driver"]:
-                print("initialize driver for alpha=", a, "beta=", b)
-            #
-            if tag == self.D["Model"]:
-                print("initialize model with n =", a)
-            #
-            if tag == self.D["Loss"]:
-                if a == self.D["Global"]:
-                    print("test global model, L1 loss", x, "MSE loss", y)
-                if a == self.D["Local"]:
-                    print("test local model, L1 loss", x, "MSE loss", y)
-                if a == self.D["LocalCE"]:
-                    print("test local model, CE loss", x)
-            #
-            if tag == self.D["Training"]:
-                if a == self.D["Global"]:
-                    print("training global model", end=" ")
-                if a == self.D["Local"]:
-                    print("training local model", end=" ")
-                print(
-                    "iterations",
-                    b,
-                    "explore prepool",
-                    c,
-                    "example prepool",
-                    d,
-                    "example_pool",
-                    e,
-                )
-            #
-            if tag == self.D["BenchmarkProof"]:
-                print(
-                    "BENCHMARK PROOF in",
-                    a,
-                    "steps",
-                    b,
-                    "cumulative nodes",
-                    c,
-                    "done leaves",
-                )
-            #
-            if tag == self.D["FullProof"]:
-                print(
-                    "FULL PROOF in",
-                    a,
-                    "steps",
-                    b,
-                    "cumulative nodes",
-                    c,
-                    "done leaves",
-                )
-            #
-            if tag == self.D["DropoutProof"]:
-                print("proof with dropout style", end="")
-                if a == self.D["Regular"]:
-                    print(" regular ", end="")
-                if a == self.D["Adaptive"]:
-                    print(" adaptive ", end="")
-                if a == self.D["Uniform"]:
-                    print(" uniform ", end="")
-                print(
-                    "threshold",
-                    b,
-                    "in",
-                    c,
-                    "steps with estimated cumulative nodes",
-                    d,
-                )
-        #
-        print("--  --  --  --  --  --  --  --  --  --  --  --  --  --  --")
-        print("     end printing history of length", itp(length))
-        print("--  --  --  --  --  --  --  --  --  --  --  --  --  --  --")
-        #
-        return
 
     def graph_history(self, P, style):
-        #
         alpha = P.alpha
         beta = P.beta
         nu = P.model_n
-        #
         ###
         if P.profile_filter_on:
             prof_filt = "on"
@@ -416,7 +282,6 @@ class Historical:
             ho_filt = "off"
         bl_iter = P.basicloop_iterations
         bl_train = P.basicloop_training_iterations
-        #
         global_p = itp(P.global_params)
         local_p = itp(P.local_params)
         ###
@@ -456,7 +321,6 @@ class Historical:
         )
         plt.plot(nump(attempts), nump(ecn_graph), ".-")
         plt.show()
-        #
         pcg = 0
         pcl = 0
         for cursor in range(self.hlength):
@@ -506,11 +370,9 @@ class Historical:
             + L1graph_local[1 : pcl - 1]
             + L1graph_local[2:pcl]
         ) / 3.0
-        #
         L1avg_local_red = (
             L1avg_local / 2.0
         )  # so it fits on the graph better, with the current adaptive_score function
-        #
         L1avg_local_red = torch.clamp(L1avg_local_red, 0.0, 0.2)
         MSEavg_global = (
             MSEgraph_global[0 : pcg - 2]
@@ -531,10 +393,7 @@ class Historical:
         ) / 3.0
         CEavg_local = CEavg_local / 10.0
         CEavg_local = torch.clamp(CEavg_local, 0.0, 0.2)
-        #
-        #
         noiselevel = self.noiselevel(P, measurements_global)
-        #
         plt.clf()
         if style == "big":
             plt.figure(figsize=(17, 8))
@@ -547,7 +406,6 @@ class Historical:
         ###
         plt.xlabel("training")
         plt.ylabel("loss")
-        #
         plt.plot(
             nump(measurements_local[5:pcl]),
             numpr(L1avg_local_red[3 : pcl - 2], 4),
@@ -558,7 +416,6 @@ class Historical:
             numpr(L1avg_global[3 : pcg - 2], 4),
             label="global-L1",
         )
-        #
         plt.plot(
             nump(measurements_local[5:pcl]),
             numpr(MSEavg_local[3 : pcl - 2], 5),
@@ -569,15 +426,12 @@ class Historical:
             numpr(MSEavg_global[3 : pcg - 2], 5),
             label="global-MSE",
         )
-        #
         plt.plot(
             nump(measurements_global[5:pcg]),
             numpr(noiselevel[3 : pcg - 2], 5),
             label="noise",
         )
-        #
         plt.legend()
         plt.show()
         ###
         self.print_proof_records(P)
-        return

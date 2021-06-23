@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -31,31 +31,23 @@ class ProtoModel:
         self.a3z = self.a * self.a * self.a + 1
         self.b = pp.beta
         self.bz = self.b + 1
-        #
         self.random_order = torch.randperm(self.a * self.a)
         self.spiral, self.spiral_mix = self.makespiral()
         self.rays = self.makerays()
-        #
         self.network = SGNetGlobal(self.pp).to(Dvc)
         # there is no network2
         self.network2_trainable = False
-        #
         # print(self.network)
         print(
             "set up the proto-model network---network2 is not trainable, this is for the benchmark"
         )
-        #
         self.benchmark = True
-        #
         self.learning_rate = 0.002
-        #
         self.optimizer = optim.SGD(
             self.network.parameters(), lr=self.learning_rate, momentum=0.9
         )
-        #
         self.criterionA = nn.L1Loss()
         self.criterionB = nn.MSELoss()
-        #
         self.softmax = nn.Softmax(dim=1)
 
     def makespiral(self):
@@ -127,20 +119,11 @@ class ProtoModel:
         return output
 
     def network2(self, Data):
-        #
         a = self.a
-        #
         length = Data["length"]
         prod = Data["prod"]
-        #
         prodsum = prod.to(torch.int64).sum(3)
         availablexyv = (prodsum > 1).view(length * a * a)
-        #
         vsv = self.virtual_score(Data).reshape(length * a * a)
-        #
         vsv[~availablexyv] = 100.0
-        #
-        values, xyvector = torch.min(vsv.view(length, a * a), 1)
-        #
-        vs = vsv.view(length, a * a)
-        return vs
+        return vsv.view(length, a * a)

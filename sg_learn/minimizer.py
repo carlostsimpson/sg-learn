@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -15,26 +15,25 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-#### next: the class used to prove the theoretical minimum (this is for alpha,beta = 3,2)
-#### note that the parameters and model should be initialized for (3,2)
-
-import gc
-
 import torch
 
 from constants import Dvc
 from driver import Driver
+from historical import Historical
 from relations_4 import Relations4
-from utils import CoherenceError, arangeic, itp, itt, nump, numpr
+from utils import CoherenceError, arangeic, itp, itt, nump
+
+# next: the class used to prove the theoretical minimum (this is for alpha,beta = 3,2)
+# note that the parameters and model should be initialized for (3,2)
 
 
 class Minimizer:  # this becomes the first element of the relations datatype
-    def __init__(self, model, sigma, cutx, cuty, cutp):
+    def __init__(self, model, sigma, cutx, cuty, cutp, HST: Historical):
         #
         #
         self.Mm = model
         self.Pp = self.Mm.pp
-        self.Dd = Driver(self.Pp)
+        self.Dd = Driver(self.Pp, HST)
         assert self.Pp.alpha == 3
         assert self.Pp.beta == 2
         #
@@ -42,7 +41,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
         #
         print("Minimizer for sigma =", sigma)
         #
-        self.rr4 = Relations4(self.Pp)
+        self.rr4 = Relations4(self.Pp, HST)
         self.rr3 = self.rr4.rr3
         self.rr2 = self.rr4.rr2
         self.rr1 = self.rr4.rr1
@@ -55,7 +54,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
         #
         self.length_max = 500000
         #
-        instancevector, trainingvector, proof_title = self.Dd.InOne(self.sigma)
+        instancevector, _, _ = self.Dd.InOne(self.sigma)
         self.InitialData = self.Dd.initialdata(instancevector, 0)
         #
         self.CurrentData = self.rr1.nulldata()
@@ -113,28 +112,15 @@ class Minimizer:  # this becomes the first element of the relations datatype
         self.combo_all()
 
     def next_stage_data(self, DataToSplit):
-        #
         a = self.alpha
         a2 = self.alpha2
-        a2z = self.alpha2 + 1
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
         bz = self.betaz
-        #
-        #
         length = DataToSplit["length"]
         prod = DataToSplit["prod"]
-        #
         availablexyp = self.rr1.availablexyp(length, prod).view(length, a2, bz)
-        #
-        avxyp_amount = availablexyp.to(torch.float).sum(2).sum(1).sum(0)
         avxyp_denom = itt(length).to(torch.float)
         if avxyp_denom < 0.1:
             avxyp_denom = 1.0
-        availablexyp_average = avxyp_amount / avxyp_denom
-        ##print("average available xyp is",numpr(availablexyp_average,2))
-        #
         lrangevxr = (
             arangeic(length)
             .view(length, 1, 1)
@@ -182,7 +168,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
         newdone = torch.zeros((ndlength), dtype=torch.bool, device=Dvc)
         newimpossible = torch.zeros((ndlength), dtype=torch.bool, device=Dvc)
         lower = 0
-        for i in range(ndlength):
+        for _ in range(ndlength):
             assert lower < ndlength
             upper = lower + 1000
             if upper > ndlength:
@@ -257,9 +243,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
         self.FullData["info"][:, self.Pp.fulldata_location] = arangeic(
             new_fdlength
         )
-        #
-        ##print("initialized full data that now has length",itp(new_fdlength))
-        return
 
     def manage_next_stage(self):
         #
@@ -348,9 +331,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
         self.FullData["info"][:, self.Pp.fulldata_location] = arangeic(
             new_fdlength
         )
-        #
-        ##print("added",itp(newactive_length),"new instances to full data that now has length",itp(new_fdlength))
-        return
 
     def fd_location(self, Data):
         length = Data["length"]
@@ -364,20 +344,13 @@ class Minimizer:  # this becomes the first element of the relations datatype
         Input = self.rr1.indexselectdata(self.FullData, fd_instances)
         #
         InitialActiveData = self.rr2.process(Input)
-        activedetect, donedetect, impossibledetect = self.rr2.filterdata(
-            InitialActiveData
-        )
+        activedetect, _, _ = self.rr2.filterdata(InitialActiveData)
         #
         ActivePool = self.rr1.detectsubdata(InitialActiveData, activedetect)
         #
         stepcount = 0
-        #
-        ##print("at step",itp(stepcount),"currently proof nodes for fd instances in question are:")
-        ##print(nump(self.upperbound[fd_instances]))
-        #
         for i in range(self.rr4.prooflooplength):
             stepcount += 1
-            prooflength = i
             if ActivePool["length"] > 0:
                 #
                 print(".", end="")
@@ -390,7 +363,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
                 ChunkData, cdetection = self.rr3.selectchunk(ActivePool)
                 #
                 #
-                ProofCurrentData, DoneData = self.rr3.managesplit(
+                ProofCurrentData, _ = self.rr3.managesplit(
                     Mstrat, ChunkData, False
                 )
                 #
@@ -398,12 +371,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
                 ActivePool = self.rr4.transitionactive(
                     ActivePool, cdetection, ProofCurrentData
                 )
-                # do the following before dropout
-                # if dropoutlimit == 0:
-                # EDN = itt(ActivePool['length']).clone().to(torch.float)
-                # self.ECN += itt(CurrentData['length']).clone().to(torch.float)
-                # this from proofloop indicates that we should add to our node counts the nodes in current data
-                #
                 if ProofCurrentData["length"] > 0:
                     current_fd_location = self.fd_location(ProofCurrentData)
                     fd_loc_list, fd_loc_counts = torch.unique(
@@ -412,12 +379,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
                     self.upperbound[fd_loc_list] = (
                         self.upperbound[fd_loc_list] + fd_loc_counts
                     )
-                #
-                ##print("at step",itp(stepcount),"currently proof nodes for fd instances in question are:")
-                ##print(nump(self.upperbound[fd_instances]))
-                #
-                gcc = gc.collect()
-                #
                 if ActivePool["length"] == 0:
                     break
                 if ActivePool["length"] > self.rr4.stopthreshold:
@@ -434,11 +395,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
             #
         #
         print("|||")
-        #
-        ##print("proofs finished, resulting in proof nodes for fd instances in question as follows:")
-        ##print(nump(self.upperbound[fd_instances]))
-        #
-        return
 
     def calculate_current_upperbound(self):
         fdlength = self.FullData["length"]
@@ -468,21 +424,11 @@ class Minimizer:  # this becomes the first element of the relations datatype
         #
         fd_lowerbound = self.lowerbound[0:fdlength]
         fd_upperbound = self.upperbound[0:fdlength]
-        #
-        fd_down = self.down[0:fdlength]
-        #
         fd_split = self.split[0:fdlength]
         fd_inplay = self.inplay[0:fdlength]
-        #
-        fd_current = fd_inplay & ~fd_split
         fd_lookat = fd_inplay & fd_split
         fd_uppable = fd_up >= 0
-        #
-        fd_availablexyp = self.availablexyp[0:fdlength]
         fd_availablexy = self.availablexy[0:fdlength]
-        #
-        # fd_impdone_xyp = (fd_down == -1)
-        #
         fd_lowerbound_xyp = torch.zeros(
             (fdlength, self.alpha, self.alpha, self.betaz),
             dtype=torch.int64,
@@ -531,23 +477,14 @@ class Minimizer:  # this becomes the first element of the relations datatype
         fd_upperbound_xy_rv = fd_upperbound_xy_r.view(
             fdlength, self.alpha * self.alpha
         )
-        #
-        fd_lowerbound_min, fdlbmindices = torch.min(fd_lowerbound_xy_rv, 1)
-        fd_upperbound_min, fdubmindices = torch.min(fd_upperbound_xy_rv, 1)
-        #
+        fd_lowerbound_min, _ = torch.min(fd_lowerbound_xy_rv, 1)
+        fd_upperbound_min, _ = torch.min(fd_upperbound_xy_rv, 1)
         fd_lowerbound_new = fd_lowerbound.clone()
         fd_upperbound_new = fd_upperbound.clone()
         fd_lowerbound_new[fd_lookat] = fd_lowerbound_min[fd_lookat]
         fd_upperbound_new[fd_lookat] = fd_upperbound_min[fd_lookat]
-        #
-        ##print("new lower bound")
-        ##print(nump(fd_lowerbound_new))
-        ##print("new upper bound")
-        ##print(nump(fd_upperbound_new))
-        #
         self.lowerbound[0:fdlength] = fd_lowerbound_new
         self.upperbound[0:fdlength] = fd_upperbound_new
-        return
 
     def recursive_bound(self, iterations):
         #
@@ -556,64 +493,27 @@ class Minimizer:  # this becomes the first element of the relations datatype
         #
         lower_all = self.lowerbound[0:fdlength].sum(0)
         upper_all = self.upperbound[0:fdlength].sum(0)
-        ##print("init with lower sum",itp(lower_all),"upper sum",itp(upper_all))
-        for i in range(iterations):
+        for _ in range(iterations):
             self.recursive_bound_step()
             lower_new = self.lowerbound[0:fdlength].sum(0)
             upper_new = self.upperbound[0:fdlength].sum(0)
-            ##print("iteration",i,"with lower sum",itp(lower_new),"upper sum",itp(upper_new))
-            #
             if lower_new == lower_all and upper_new == upper_all:
-                ##print("stabilizes")
                 break
             else:
                 lower_all = lower_new
                 upper_all = upper_new
-        ##print("done with recursive bound steps")
-        return
 
     def remove_from_play(self, subset):
-        #
-        #
         fdlength = self.FullData["length"]
-        #
         fd_up = self.up[0:fdlength]
         fd_up_mod = torch.clamp(fd_up, 0, fdlength)
-        #
-        inplay_prev = self.inplay[0:fdlength].to(torch.int64).sum(0)
-        ##print("previous in play count is",itp(inplay_prev))
-        ##print("removing",itp(subset.to(torch.int64).sum(0)),"locations from play")
-        #
         self.inplay[0:fdlength] = self.inplay[0:fdlength] & (~subset)
-        #
-        for i in range(100):
+        for _ in range(100):
             inplay_count = self.inplay[0:fdlength].to(torch.int64).sum(0)
             inplay_up = self.inplay[fd_up_mod]
             self.inplay[0:fdlength] = self.inplay[0:fdlength] & inplay_up
             if self.inplay[0:fdlength].to(torch.int64).sum(0) == inplay_count:
                 break
-        inplay_new = self.inplay[0:fdlength].to(torch.int64).sum(0)
-        ##print("new in play count is",itp(inplay_new))
-        #
-        return
-
-    def random_remove_from_play(self, threshold):
-        fdlength = self.FullData["length"]
-        tirage = torch.rand((fdlength), device=Dvc)
-        subset = tirage < threshold
-        subset[0] = False
-        self.remove_from_play(subset)
-        return
-
-    def leave_in_play(
-        self, instance
-    ):  # for now we assume that this is at the first stage
-        fdlength = self.FullData["length"]
-        subset = torch.ones((fdlength), dtype=torch.bool, device=Dvc)
-        subset[0] = False
-        subset[instance] = False
-        self.remove_from_play(subset)
-        return
 
     def initial_cut(self, x, y, p):
         fdlength = self.FullData["length"]
@@ -623,7 +523,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
         subset[0] = False
         subset[instance] = False
         self.remove_from_play(subset)
-        return
 
     def prune(self):
         #
@@ -632,47 +531,22 @@ class Minimizer:  # this becomes the first element of the relations datatype
         fd_lowerbound = self.lowerbound[0:fdlength]
         fd_upperbound = self.upperbound[0:fdlength]
         fd_inplay = self.inplay[0:fdlength]
-        #
-        badlocations = (fd_lowerbound > fd_upperbound) & fd_inplay
-        badlocations_count = badlocations.to(torch.int64).sum(0)
-        #
-        ##if badlocations_count > 0:
-        ##print("warning, we found",itp(badlocations_count),"bad locations")
-        ##else:
-        ##print("all locations are good")
-        #
         attained = (fd_lowerbound == fd_upperbound) & fd_inplay
-        attained_count = attained.to(torch.int64).sum(0)
-        #
         up_mod = torch.clamp(self.up[0:fdlength], 0, fdlength)
-        #
         upperbound_up = self.upperbound[up_mod]
         nonoptimal = (fd_lowerbound + 1) >= upperbound_up
         nonoptimal[0] = False
-        nonoptimal_count = nonoptimal.to(torch.int64).sum(0)
-        #
         to_remove = nonoptimal | attained
-        #
-        ##print("found",itp(attained_count),"attained and",itp(nonoptimal_count),"nonoptimal locations that we remove from play (along with everything below)")
         self.remove_from_play(to_remove)
-        ##print("done pruning")
-        return
 
     def combo_init(self):
-        # print("------ initial combo segments ---------")
-        # print("------ manage next stage (two iterations)")
         self.manage_next_stage()
         self.manage_next_stage()
         print("------ make initial cut at", self.cutx, self.cuty, self.cutp)
         self.initial_cut(self.cutx, self.cuty, self.cutp)
-        # print("------ calculate current upper bound")
         self.calculate_current_upperbound()
-        # print("------ recursive bound")
         self.recursive_bound(100)
-        # print("------ prune")
         self.prune()
-        # print("------ done with initial combo segment ---------")
-        return
 
     def combo_step(self):
         # print("------ combo segment ---------")
@@ -693,11 +567,7 @@ class Minimizer:  # this becomes the first element of the relations datatype
 
     def check_done(self):
         fdlength = self.FullData["length"]
-        #
-        fd_lowerbound = self.lowerbound[0:fdlength]
-        fd_upperbound = self.upperbound[0:fdlength]
         fd_inplay = self.inplay[0:fdlength]
-        #
         inplay_count = fd_inplay.to(torch.int64).sum(0)
         if inplay_count > 1:
             return False
@@ -738,26 +608,13 @@ class Minimizer:  # this becomes the first element of the relations datatype
                                     lb_next_xyp = self.lowerbound[down_xyp]
                                     assert lb_next_xyp > 0
                                     lb_next[x, y] += lb_next_xyp
-                                    #
                                     ub_next_xyp = self.upperbound[down_xyp]
                                     ub_next[x, y] += ub_next_xyp
-            #
-            ##print("lower bounds for the next cut locations x,y are as follows:")
-            ##print(nump(lb_next))
-            ##print("upper bounds")
-            ##print(nump(ub_next))
-            ##print("full data length was",itp(fdlength))
-            ##self.show_neural_network_results()
-            #
         return True
 
     def check_done_print(self):
         fdlength = self.FullData["length"]
-        #
-        fd_lowerbound = self.lowerbound[0:fdlength]
-        fd_upperbound = self.upperbound[0:fdlength]
         fd_inplay = self.inplay[0:fdlength]
-        #
         inplay_count = fd_inplay.to(torch.int64).sum(0)
         if inplay_count > 1:
             print("not done: there are remaining locations in play")
@@ -780,7 +637,6 @@ class Minimizer:  # this becomes the first element of the relations datatype
                 itp(self.lowerbound[cut_instance]),
             )
             print("this was for sigma =", self.sigma)
-            #
             lb_next = torch.zeros(
                 (self.alpha, self.alpha), dtype=torch.int64, device=Dvc
             )
@@ -799,10 +655,8 @@ class Minimizer:  # this becomes the first element of the relations datatype
                                     lb_next_xyp = self.lowerbound[down_xyp]
                                     assert lb_next_xyp > 0
                                     lb_next[x, y] += lb_next_xyp
-                                    #
                                     ub_next_xyp = self.upperbound[down_xyp]
                                     ub_next[x, y] += ub_next_xyp
-            #
             print(
                 "lower bounds for the next cut locations x,y are as follows:"
             )
@@ -813,83 +667,13 @@ class Minimizer:  # this becomes the first element of the relations datatype
                 "lower and upper bounds should coincide. Add 1 to plug back into the previous cut location"
             )
             print("full data length was", itp(fdlength))
-            # self.show_neural_network_results()
-            #
         return True
-
-    def show_neural_network_results(
-        self,
-    ):  # not currently working, also our new network 2 has a different objective
-        #
-        fdlength = self.FullData["length"]
-        #
-        subset = torch.zeros((fdlength), dtype=torch.bool, device=Dvc)
-        subset[0:500] = True
-        TruncatedFullData = self.rr1.detectsubdata(self.FullData, subset)
-        fd_network_output = self.Mm.network(TruncatedFullData).detach()
-        net2 = M.network2(TruncatedFullData)
-        fd_network2_output = net2.detach()
-        #
-        fdn2_exp_rootv = (10 ** fd_network2_output[0]).view(
-            self.alpha * self.alpha
-        )
-        avxy_rootv = self.availablexy[0].view(self.alpha * self.alpha)
-        fdn2_exp_rootv[~avxy_rootv] = 0.0
-        fdn2_exp_rootmod = fdn2_exp_rootv.view(self.alpha, self.alpha)
-        print("network 2 output at root")
-        print(numpr(fdn2_exp_rootmod, 2))
-        #
-        cutx = self.cutx
-        cuty = self.cuty
-        cutp = self.cutp
-        cut_instance = self.down[0, cutx, cuty, cutp]
-        #
-        fd_network2_cut_instance = fd_network2_output[cut_instance]
-        fdn2_exp_v = (10 ** fd_network2_cut_instance).view(
-            self.alpha * self.alpha
-        )
-        print(
-            "network 2 gives the following matrix (after exponentiating base 10), unavailable = 0"
-        )
-        avxy_v = self.availablexy[cut_instance].view(self.alpha * self.alpha)
-        fdn2_exp_v[~avxy_v] = 0.0
-        fdn2_exp_mod = fdn2_exp_v.view(self.alpha, self.alpha)
-        print(numpr(fdn2_exp_mod, 2))
-        #
-        fdn_exp_sum = torch.zeros(
-            (self.alpha, self.alpha), dtype=torch.float, device=Dvc
-        )
-        for x in range(self.alpha):
-            for y in range(self.alpha):
-                if self.availablexy[cut_instance, x, y]:
-                    fdn_exp_sum[x, y] = 1.0
-                    for p in range(self.betaz):
-                        if self.availablexyp[cut_instance, x, y, p]:
-                            down_xyp = self.down[cut_instance, x, y, p]
-                            if down_xyp > 0:
-                                fdn_next_xyp = 10 ** (
-                                    fd_network_output[down_xyp]
-                                )
-                                fdn_exp_sum[x, y] += fdn_next_xyp
-        #
-        print(
-            "summing the results of the first network gives the following matrix"
-        )
-        print(numpr(fdn_exp_sum, 2))
-        print("= = = = = =")
-        return
 
     def combo_all(self):
         self.combo_init()
         for i in range(20):
-            ##print("===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===")
-            ##print("===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===")
             print(">>>>>>>>>>>>>>>>>>>>> combo step iteration number", i)
-            ##print("===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===")
-            ##print("===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===")
             step_result = self.combo_step()
             if step_result == "done":
                 break
-        ##print("===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===")
         print("combo all is completed.")
-        return

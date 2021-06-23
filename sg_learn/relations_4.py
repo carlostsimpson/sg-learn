@@ -1,5 +1,5 @@
 """
-    Machine learning proofs for classification of nilpotent semigroups. 
+    Machine learning proofs for classification of nilpotent semigroups.
     Copyright (C) 2021  Carlos Simpson
 
     This program is free software: you can redistribute it and/or modify
@@ -15,8 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-import gc
-
 import torch
 
 from constants import Dvc
@@ -68,22 +66,10 @@ class Relations4:
         self.rr2.impossible_basic_count = 0
         self.rr2.halfones_count = 0
         self.dropoutratio = 1.0
-        return
 
     def printexamples(self, Data):
-        #
-        a = self.alpha
-        a2 = self.alpha2
-        a3 = self.alpha3
-        a3z = self.alpha3z
-        b = self.beta
-        bz = self.betaz
-        #
         length = Data["length"]
-        depth = Data["depth"]
-        prod = Data["prod"]
         ternary = Data["ternary"]
-        #
         if length == 0:
             print("length 0, no examples to print")
             return
@@ -113,7 +99,7 @@ class Relations4:
         #
         return NextActivePoolCopy
 
-    def transitiondone(self, C, DonePool, DoneData, aplength):
+    def transitiondone(self, C, DonePool, DoneData):
         #
         idl = DoneData["length"]
         #
@@ -168,12 +154,6 @@ class Relations4:
         self.DroppedSamplePool = self.rr1.appenddata(
             self.DroppedSamplePool, DroppedPool
         )
-        #
-        # print("sample pool has size",itp(self.SamplePool['length']))
-        # Fws.trace("transition samples Active Pool",ActivePool,5,0,0,0)
-        # Fws.trace("transition samples Sample Pool",self.SamplePool,5,0,0,0)
-        # self.printsampleex()
-        return
 
     def proofloop(self, Mstrat, Mlearn, C, Input, dropoutlimit):
         #
@@ -219,7 +199,7 @@ class Relations4:
             )
         #
         if dropoutlimit > 0:
-            ActivePool, DroppedPool, newsum, droppedsum = self.dropoutdata(
+            ActivePool, DroppedPool, _, droppedsum = self.dropoutdata(
                 Mlearn, ActivePool, dropoutlimit
             )
             if self.pp.dropout_style == "adaptive":
@@ -290,21 +270,16 @@ class Relations4:
                     (
                         ActivePool,
                         DroppedPool,
-                        newsum,
+                        _,
                         droppedsum,
                     ) = self.dropoutdata(Mlearn, ActivePool, dropoutlimit)
-                    #
                     self.transitionsamples(ActivePool, DroppedPool)
-                    #
                     if self.pp.dropout_style == "adaptive":
                         activelengthf = (
                             itt(ActivePool["length"]).clone().to(torch.float)
                         )
                         self.ECN += activelengthf + droppedsum
                         EDN = 0.0
-                    #
-                    #
-                    #
                     if self.pp.verbose:
                         self.printexamples(ActivePool)
                 #
@@ -315,7 +290,6 @@ class Relations4:
                         itp(ActivePool["length"]),
                         end=" ",
                     )
-                    #
                     print(
                         "treated Chunk Data of length",
                         itp(ChunkData["length"]),
@@ -328,21 +302,14 @@ class Relations4:
                         "net active data gained",
                         itp(CurrentData["length"] - ChunkData["length"]),
                     )
-                    #
                     print(
                         "Active Pool has length",
                         itp(ActivePool["length"]),
                         end=" ",
                     )
-                DonePool = self.transitiondone(
-                    C, DonePool, DoneData, ActivePool["length"]
-                )
-                #
-                gcc = gc.collect()
+                DonePool = self.transitiondone(C, DonePool, DoneData)
                 if self.pp.verbose:
                     memReport("mg")
-                    #
-                    #
                     if 0 < dropoutlimit <= self.pp.chunksize:
                         print(
                             "Estimated nodes at this depth",
@@ -373,15 +340,12 @@ class Relations4:
             #
             # if (napcount%self.periodicity) == 0:
             # siesta(self.sleeptime)
-            #
-        #
         print("|||")
         activelength = ActivePool["length"]
         donelength = DonePool["length"]
         if donelength > 0:
             C.process(DonePool)
             DonePool = self.rr1.nulldata()
-        #
         if dropoutlimit == 0:
             cumulative_nodes = torch.round(self.ECN).to(torch.int64)
             self.HST.record_full_proof(
@@ -391,7 +355,6 @@ class Relations4:
             self.HST.record_dropout_proof(
                 self.pp.dropout_style, dropoutlimit, stepcount, self.ECN
             )
-        #
         if self.pp.verbose:
             if activelength > 0:
                 print(
@@ -431,7 +394,6 @@ class Relations4:
             NewData, DroppedData, newsum, droppedsum = self.dropoutdataUniform(
                 M, Data, dropoutlimit
             )
-        #
         return NewData, DroppedData, newsum, droppedsum
 
     def dropoutdataRegular(self, Data, dropoutlimit):
@@ -451,7 +413,6 @@ class Relations4:
         return NewData, DroppedData
 
     def extent_sliced(self, M, Data):
-        #
         length = Data["length"]
         if length <= 1000:
             extent_log = M.network(Data).detach()
@@ -460,9 +421,8 @@ class Relations4:
             return extent
         extent = torch.zeros((length), dtype=torch.float, device=Dvc)
         lrange = arangeic(length)
-        #
         lower = 0
-        for i in range(length):
+        for _ in range(length):
             upper = lower + 1000
             if upper > length:
                 upper = length
@@ -480,7 +440,6 @@ class Relations4:
         length = Data["length"]
         if length == 0:
             return Data, self.rr1.nulldata(), 0.0, 0.0
-        #
         extent = self.extent_sliced(M, Data)
         denom = extent.sum(0)
         proba = (dropoutlimit * extent) / denom
@@ -510,10 +469,8 @@ class Relations4:
         length = Data["length"]
         if length == 0:
             return Data, self.rr1.nulldata(), 0.0, 0.0
-        #
         extent = self.extent_sliced(M, Data)
-        #
-        values, sort_indices = torch.sort(extent, 0)
+        _, sort_indices = torch.sort(extent, 0)
         fraction = itf(length) / itf(dropoutlimit)
         epsilon_multiplier = itf(length - dropoutlimit) / itf(length)
         epsilon_multiplier = torch.clamp(epsilon_multiplier, 0.0, 1.0)
@@ -537,14 +494,12 @@ class Relations4:
         tirage2_integral = tirage2_triangle.sum(0)
         epsilon = tirage * epsilon_multiplier
         drange_mod = drange + epsilon + (0.05 * tirage2_integral)
-        #
         float_indices = drange_mod * fraction
         round_indices = torch.round(float_indices).to(torch.int64)
         round_indices = torch.clamp(round_indices, 0, length - 1)
         combined_indices = sort_indices[round_indices]
         detection = torch.zeros((length), dtype=torch.bool, device=Dvc)
         detection[combined_indices] = True
-        #
         if length <= dropoutlimit:
             NewData = self.rr1.copydata(Data)
             DroppedData = self.rr1.nulldata()
@@ -556,25 +511,3 @@ class Relations4:
             newsum = (extent[detection]).sum(0)
             droppedsum = (extent[~detection]).sum(0)
         return NewData, DroppedData, newsum, droppedsum
-
-    def printsampleex(self):
-        samplelength = self.SamplePool["length"]
-        if samplelength == 0:
-            return
-        upper = 20
-        if upper > samplelength:
-            upper = samplelength
-        permutation = torch.randperm(samplelength, device=Dvc)
-        depth = self.SamplePool["depth"]
-        points = self.SamplePool["info"][:, self.pp.samplepoints]
-        for i in range(upper):
-            ip = permutation[i]
-            print(
-                "number",
-                ip,
-                "depth",
-                itp(depth[ip]),
-                "points",
-                itp(points[ip]),
-            )
-        return
