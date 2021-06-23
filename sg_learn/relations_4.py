@@ -66,7 +66,6 @@ class Relations4:
         self.rr2.impossible_basic_count = 0
         self.rr2.halfones_count = 0
         self.dropoutratio = 1.0
-        return
 
     def printexamples(self, Data):
         length = Data["length"]

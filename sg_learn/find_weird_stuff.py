@@ -73,7 +73,6 @@ class FindWeirdStuff:
                 column = right[loc, x, y]
                 prarray[x, y] = self.Dd.printcolumn2(column)
         print(nump(prarray))
-        return
 
     def print_prod_left_right(self, Data, i):
         prod = Data["prod"]
@@ -88,7 +87,6 @@ class FindWeirdStuff:
         self.Dd.printleft(left, i)
         self.printright(right, i)
         print("---------------------------------------------------")
-        return
 
     def print_column_bool(self, column):
         clength = len(column)
@@ -104,7 +102,6 @@ class FindWeirdStuff:
                 column = btensor[x, y]
                 prarray[x, y] = self.print_column_bool(column)
         print(nump(prarray))
-        return
 
     def print_one_sample_from_box(self, xlower, xupper, ylower, yupper):
         #
@@ -135,7 +132,6 @@ class FindWeirdStuff:
             print("done")
         if impossibledetect[loc]:
             print("impossible")
-        return
 
     def av_root(self, DataToSplit, i):
         a = self.alpha
@@ -258,8 +254,6 @@ class FindWeirdStuff:
         trprod = InitialData["prod"][0]
         #
         self.tracer(trprod)
-        #
-        return
 
     def tracer_subroot(self, sigma, x, y, p):
         #

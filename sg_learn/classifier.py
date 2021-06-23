@@ -59,7 +59,6 @@ class Classifier:  # this is a very first part of classification up to isomorphi
     def initialize(self):
         self.eqlength = 0
         self.eqlist = None
-        return
 
     def choosestuff(self, ilength):
         assert ilength <= 48

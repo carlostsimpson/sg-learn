@@ -84,7 +84,6 @@ class Historical:
         self.current_proof_done_count = 0
         self.current_proof_passive_count = 0
         self.current_proof_benchmark = 0
-        return
 
     def record_current_proof(self, Pp, benchmark=False):
         """
@@ -109,7 +108,6 @@ class Historical:
             print("recorded full proof", end=" ")
         self.print_proof_recordi(self.prcursor, Pp)
         self.prcursor += 1
-        return
 
     def print_proof_recordi(self, i, Pp):
         #
@@ -131,7 +129,6 @@ class Historical:
             "by valency",
             valency,
         )
-        return
 
     def print_proof_records(self, Pp):
         #
@@ -176,7 +173,6 @@ class Historical:
                 proof_number += 1
             self.print_proof_recordi(i, Pp)
         print("-------------------------------------------------------------")
-        return
 
     def noiselevel(self, P, count_tensor):
         counterf = count_tensor.to(torch.float)
@@ -196,7 +192,6 @@ class Historical:
         self.local_tweak_cursor = 0
         self.global_tweak_cursor = 0
         print("reinitialized history")
-        return
 
     def increment(self):
         if self.hlength >= self.hlength_max:
@@ -212,14 +207,12 @@ class Historical:
         self.histi[cursor, 0] = self.D["Parameters"]
         self.histi[cursor, 1] = alpha
         self.histi[cursor, 2] = beta
-        return
 
     def record_driver(self, alpha, beta):
         cursor = self.increment()
         self.histi[cursor, 0] = self.D["Driver"]
         self.histi[cursor, 1] = alpha
         self.histi[cursor, 2] = beta
-
 
     def record_loss(self, style, L1_loss, MSE_loss):
         cursor = self.increment()
@@ -240,7 +233,6 @@ class Historical:
         self.histf[cursor, 1] = MSE_loss_detach
         #
         self.training_counter += 1
-        return
 
     def record_training(
         self,
@@ -263,7 +255,6 @@ class Historical:
         self.histi[cursor, 3] = explore_pre_pool
         self.histi[cursor, 4] = example_pre_pool
         self.histi[cursor, 5] = example_pool
-        return
 
     def record_full_proof(self, M, steps, cumulative_nodes, done_nodes):
         cursor = self.increment()
@@ -275,7 +266,6 @@ class Historical:
         self.histi[cursor, 1] = steps
         self.histi[cursor, 2] = cumulative_nodes
         self.histi[cursor, 3] = done_nodes
-        return
 
     def record_dropout_proof(self, style, dropout, steps, ECN):
         cursor = self.increment()
@@ -294,7 +284,6 @@ class Historical:
         self.histi[cursor, 3] = steps
         ecnr = torch.round(ECN).to(torch.int64)
         self.histi[cursor, 4] = ecnr
-
 
     def graph_history(self, P, style):
         #
@@ -477,4 +466,3 @@ class Historical:
         plt.show()
         ###
         self.print_proof_records(P)
-        return

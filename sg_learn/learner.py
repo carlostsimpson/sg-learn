@@ -106,7 +106,6 @@ class Learner:  # training the neural networks
             raise CoherenceError(
                 "availability problem in data that should be active"
             )
-        return
 
     def prepoolSamples(
         self, Data, new_examples
@@ -421,8 +420,6 @@ class Learner:  # training the neural networks
         self.transferexamples(
             M, TransferData, phased_extent, xyscore_log, epp_throw_detection
         )
-        #
-        return
 
     def noisetensor(self, thetensor):
         #
@@ -581,7 +578,6 @@ class Learner:  # training the neural networks
             plt.plot([0.0, 0.0], [0.0, linelimit], "g-", lw=1)
             plt.plot([0.0, linelimit], [0.0, linelimit], "r-", lw=1)
             plt.show()
-        return
 
     def learningGlobal(self, M, globaliterations):
         #
@@ -633,7 +629,6 @@ class Learner:  # training the neural networks
             print("  ")
         self.printlossaftertrainingGlobal(M, 500, True)
         print("=================    end score training   =================")
-        return
 
     # Local stuff
 
@@ -1022,4 +1017,3 @@ class Learner:  # training the neural networks
             print("  ")
         self.printlossaftertrainingLocal(M, 500, True)
         print("=================    end score training   =================")
-        return

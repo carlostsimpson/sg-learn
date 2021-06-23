@@ -104,7 +104,6 @@ def memReport(style):  # by QuantScientist Solomon K @smth
         for obj in gc.garbage:
             if torch.is_tensor(obj):
                 print(type(obj), obj.size())
-    return
 
 
 def arangeic(x):
@@ -119,8 +118,7 @@ def itp(x):  # integer to print
 def itt(x):  # integer to torch
     if torch.is_tensor(x):
         return x
-    else:
-        return torch.tensor(x, device=Dvc)
+    return torch.tensor(x, device=Dvc)
 
 
 def itf(x):  # integer to torch.float
@@ -130,8 +128,7 @@ def itf(x):  # integer to torch.float
 def nump(x):
     if torch.is_tensor(x):
         return x.detach().to(CpuDvc).numpy()
-    else:
-        return x
+    return x
 
 
 def numpr(x, k):

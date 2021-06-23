@@ -111,7 +111,6 @@ class MinimizerHistory:  # this becomes the first element of the relations datat
         print(
             "---------------------------------------------------------------------"
         )
-        return
 
     def minimize_all(self):
         #
@@ -127,4 +126,3 @@ class MinimizerHistory:  # this becomes the first element of the relations datat
                         )
                         self.results[x, y, p] = Min.lowerbound[cut_instance]
         self.print_results()
-        return

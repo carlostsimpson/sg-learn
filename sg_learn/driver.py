@@ -77,7 +77,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
                 column = prod[loc, x, y]
                 prarray[x, y] = self.printcolumn(column)
         print(nump(prarray))
-        return
 
     def printcolumn(self, column):
         b = self.beta
@@ -126,7 +125,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
                 column = left[loc, x, y]
                 prarray[x, y] = self.printcolumn2(column)
         print(nump(prarray))
-        return
 
     def printright(self, right, loc):
         #
@@ -140,7 +138,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
                 column = right[loc, x, y]
                 prarray[x, y] = self.printcolumn2(column)
         print(nump(prarray))
-        return
 
     def print_prod_left_right(self, Data, i, as_sigma):
         prod = Data["prod"]
@@ -157,7 +154,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         self.printleft(left, i)
         self.printright(right, i)
         print("---------------------------------------------------")
-        return
 
     def print_just_left(self, Data, i, as_sigma):
         left = Data["left"]
@@ -168,7 +164,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         )
         self.printleft(left, i)
         print("---------------------------------------------------")
-        return
 
     ##########################################################
 
@@ -491,7 +486,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
             # self.print_prod_left_right(InitialData,i,as_sigma)
             self.print_just_left(InitialData, i, as_sigma)
         print("- - - - - - - - - - - - - - - - - - -")
-        return
 
     def classificationproof(
         self, Mstrat, Mlearn, dropoutlimit, proving_instances, title_text
@@ -561,7 +555,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
             "===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ===   ==="
         )
         #
-        return
 
     # mini programs for creation of the instancevector_title object (it is really a pair)
 
@@ -704,7 +697,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
         print(
             "======      ======      ======      ======      ======      ======"
         )
-        return
 
     def basicloop_classificationproof(
         self, Mstrat, Mlearn, proving_instances, training_instances, title_text
@@ -719,7 +711,6 @@ class Driver:  # to run everything, it includes the sieve for instances sigma
                 Mstrat, Mlearn, 0, proving_instances, title_text
             )
             self.HST.graph_history(self.Pp, "big")
-        return
 
     # the following function automates the process of choosing a collection of instances to do
 

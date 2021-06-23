@@ -148,7 +148,6 @@ class Relations3:
             self.HST.current_proof_valency_frequency[v] += (
                 (valency == v).to(torch.int64).sum(0)
             )
-        return
 
     def managesplit(self, M, DataToSplit, randomize):
         a = self.alpha

@@ -86,5 +86,3 @@ class SgModel:
                 factor = modif + 1.0
                 with torch.no_grad():
                     p *= factor
-        return
-
